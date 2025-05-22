@@ -1,0 +1,24 @@
+volumes:
+  pg_data:
+
+services:
+  db:
+    image: ${POSTGRES_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: tests
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  pg_admin:
+    image: dpage/pgadmin4:9.3.0
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@y.net
+      PGADMIN_DEFAULT_PASSWORD: admin
