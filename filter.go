@@ -36,12 +36,6 @@ var (
 	}
 )
 
-type sqlWhere struct {
-	Columns   []ColumnSelector
-	Predicate any
-	Args      []any
-}
-
 func (expr *WhereExpression) toSql() (sq.Sqlizer, set.Set[ColumnSelector], error) {
 	return expr.toSqlChild2()
 }
@@ -104,11 +98,6 @@ type WhereExpression struct {
 	And    []WhereExpression
 	Or     []WhereExpression
 	Filter *Filter
-}
-
-type filterValidation struct {
-	address string
-	err     error
 }
 
 func (f WhereExpression) Validate() error {
