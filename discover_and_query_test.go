@@ -26,13 +26,14 @@ func TestDiscoverAndQueryData(t *testing.T) {
 					"tableA.name",
 					"tableA.age",
 					"tableA.other_b",
+					"tableA.other_b2",
 				},
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableA.id": int32(4), "tableA.name": "Alice", "tableA.age": 30.0, "tableA.other_b": int32(1)},
-					{"tableA.id": int32(5), "tableA.name": "Bob", "tableA.age": 25.0, "tableA.other_b": int32(2)},
-					{"tableA.id": int32(6), "tableA.name": "Charlie", "tableA.age": 35.0, "tableA.other_b": nil},
+					{"tableA.id": int32(4), "tableA.name": "Alice", "tableA.age": 30.0, "tableA.other_b": int32(1), "tableA.other_b2": int32(2)},
+					{"tableA.id": int32(5), "tableA.name": "Bob", "tableA.age": 25.0, "tableA.other_b": int32(2), "tableA.other_b2": nil},
+					{"tableA.id": int32(6), "tableA.name": "Charlie", "tableA.age": 35.0, "tableA.other_b": int32(2), "tableA.other_b2": int32(3)},
 				},
 				Limit: 5,
 				Total: 3,
@@ -61,7 +62,7 @@ func TestDiscoverAndQueryData(t *testing.T) {
 			},
 		},
 		{
-			Desc: "select columns from a and b",
+			Desc: "select some columns from a and b",
 			Query: Query{
 				Select: []ColumnSelector{
 					"tableA.id",
@@ -73,7 +74,7 @@ func TestDiscoverAndQueryData(t *testing.T) {
 				Data: []map[string]any{
 					{"tableA.id": int32(4), "tableA.name": "Alice", "tableA.other_b.tableB.name": "nameB1"},
 					{"tableA.id": int32(5), "tableA.name": "Bob", "tableA.other_b.tableB.name": "nameB2"},
-					{"tableA.id": int32(6), "tableA.name": "Charlie", "tableA.other_b.tableB.name": nil},
+					{"tableA.id": int32(6), "tableA.name": "Charlie", "tableA.other_b.tableB.name": "nameB2"},
 				},
 				Limit: 5,
 				Total: 3,
@@ -123,6 +124,89 @@ func TestDiscoverAndQueryData(t *testing.T) {
 				Total: 1,
 			},
 		},
+		{
+			Desc: "select columns from a, b and c",
+			Query: Query{
+				Select: []ColumnSelector{
+					"tableA.id",
+					"tableA.other_b.tableB.id",
+					"tableA.other_b.tableB.other_c.tableC.name",
+					"tableA.other_b.tableB.other_c.tableC.description",
+					"tableA.other_b2.tableB.other_c.tableC.description",
+				},
+				Limit: 5,
+			},
+			Expected: QueryResult{
+				Data: []map[string]any{
+					{"tableA.id": int32(4), "tableA.other_b.tableB.id": int32(1), "tableA.other_b.tableB.other_c.tableC.description": "Description 1", "tableA.other_b.tableB.other_c.tableC.name": "tableC1", "tableA.other_b2.tableB.other_c.tableC.description": "Description 2"},
+					{"tableA.id": int32(5), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2", "tableA.other_b2.tableB.other_c.tableC.description": nil},
+					{"tableA.id": int32(6), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2", "tableA.other_b2.tableB.other_c.tableC.description": nil},
+				},
+				Limit: 5,
+				Total: 3,
+			},
+		},
+		{
+			Desc: "select columns from a, b and c with filter on b",
+			Query: Query{
+				Select: []ColumnSelector{
+					"tableA.id",
+					"tableA.other_b.tableB.id",
+					"tableA.other_b.tableB.other_c.tableC.name",
+					"tableA.other_b.tableB.other_c.tableC.description",
+				},
+				Where: &WhereExpression{
+					Or: []WhereExpression{
+						{Filter: &Filter{
+							Column: "tableA.other_b.tableB.id",
+							Op:     "equal",
+							Value:  nil,
+						}},
+						{Filter: &Filter{
+							Column: "tableA.other_b.tableB.id",
+							Op:     "notEqual",
+							Value:  1,
+						}},
+					}},
+				Limit: 5,
+			},
+			Expected: QueryResult{
+				Data: []map[string]any{
+					{"tableA.id": int32(5), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2"},
+					{"tableA.id": int32(6), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2"},
+				},
+				Limit: 5,
+				Total: 2,
+			},
+		},
+		{
+			Desc: "select columns from a, b and c with filter on c",
+			Query: Query{
+				Select: []ColumnSelector{
+					"tableA.id",
+					"tableA.other_b.tableB.id",
+					"tableA.other_b.tableB.other_c.tableC.name",
+					"tableA.other_b.tableB.other_c.tableC.description",
+				},
+				Where: &WhereExpression{
+					Filter: &Filter{
+						Column: "tableA.other_b.tableB.other_c.tableC.description",
+						Op:     "contains",
+						Value:  " ",
+					},
+				},
+				Limit: 5,
+			},
+			Expected: QueryResult{
+				Data: []map[string]any{
+					{"tableA.id": int32(4), "tableA.other_b.tableB.id": int32(1), "tableA.other_b.tableB.other_c.tableC.description": "Description 1", "tableA.other_b.tableB.other_c.tableC.name": "tableC1"},
+					{"tableA.id": int32(5), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2"},
+					{"tableA.id": int32(6), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2"},
+				},
+				Limit: 5,
+				Total: 3,
+			},
+		},
 	}
 
 	schema := `
@@ -145,7 +229,8 @@ CREATE TABLE "tableA" (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
   age DOUBLE PRECISION,
-  other_b INTEGER REFERENCES "tableB"(id)
+  other_b INTEGER REFERENCES "tableB"(id) NOT NULL,
+	other_b2 INTEGER REFERENCES "tableB"(id)
 );
 
 INSERT INTO "tableC" (name, description) VALUES
@@ -158,10 +243,10 @@ INSERT INTO "tableB" (id, name, other_c) VALUES
   (2, 'nameB2', 'tableC2'),
   (3, 'nameB3', NULL);
 
-INSERT INTO "tableA" (id, name, age, other_b) VALUES
-  (4, 'Alice', 30, 1),
-  (5, 'Bob', 25, 2),
-  (6, 'Charlie', 35, NULL);
+INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
+  (4, 'Alice', 30, 1, 2),
+  (5, 'Bob', 25, 2, NULL),
+  (6, 'Charlie', 35, 2, 3);
 `
 
 	c := Config{

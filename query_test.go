@@ -165,7 +165,7 @@ func TestConvertQuery(t *testing.T) {
 						{
 							Filter: &Filter{
 								Column: ColumnSelector("table1.age"),
-								Op:     "greaterThan",
+								Op:     "greater",
 								Value:  30,
 							}},
 					}},

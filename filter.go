@@ -12,10 +12,27 @@ type FilterOp string
 
 var (
 	// supported where operations from name to func(column, value) -> sq.Sqlizer
-	filterOperations = map[FilterOp](func(string, any) sq.Sqlizer){
-		"equal":       func(s string, v any) sq.Sqlizer { return sq.Eq{s: v} },
-		"notEqual":    func(s string, v any) sq.Sqlizer { return sq.NotEq{s: v} },
-		"greaterThan": func(s string, v any) sq.Sqlizer { return sq.Gt{s: v} },
+	filterOperations = map[FilterOp](func(string, any) (sq.Sqlizer, error)){
+		"contains": func(s string, v any) (sq.Sqlizer, error) {
+			vs, ok := (v).(string)
+			if !ok {
+				return nil, errors.New("contains only supported for string")
+			}
+			return sq.Like{s: "%" + vs + "%"}, nil
+		},
+		"equal":          func(s string, v any) (sq.Sqlizer, error) { return sq.Eq{s: v}, nil },
+		"greater":        func(s string, v any) (sq.Sqlizer, error) { return sq.Gt{s: v}, nil },
+		"greaterOrEqual": func(s string, v any) (sq.Sqlizer, error) { return sq.GtOrEq{s: v}, nil },
+		"less":           func(s string, v any) (sq.Sqlizer, error) { return sq.Lt{s: v}, nil },
+		"lessOrEqual":    func(s string, v any) (sq.Sqlizer, error) { return sq.LtOrEq{s: v}, nil },
+		"notContains": func(s string, v any) (sq.Sqlizer, error) {
+			vs, ok := (v).(string)
+			if !ok {
+				return nil, errors.New("contains only supported for string")
+			}
+			return sq.NotLike{s: "%" + vs + "%"}, nil
+		},
+		"notEqual": func(s string, v any) (sq.Sqlizer, error) { return sq.NotEq{s: v}, nil },
 	}
 )
 
@@ -39,7 +56,11 @@ func (expr WhereExpression) toSqlChild2() (sq.Sqlizer, set.Set[ColumnSelector], 
 		}
 		cols := map[ColumnSelector]struct{}{expr.Filter.Column: {}}
 
-		return op(f.Column.StringQuoted(), f.Value), cols, nil
+		x, err := op(f.Column.StringQuoted(), f.Value)
+		if err != nil {
+			return nil, nil, err
+		}
+		return x, cols, nil
 	}
 
 	if len(expr.And) > 0 {
@@ -146,9 +167,6 @@ func (f Filter) Validate() error {
 	}
 	if f.Op == "" {
 		return fmt.Errorf("missing operator")
-	}
-	if f.Value == nil {
-		return fmt.Errorf("missing value")
 	}
 	return nil
 }

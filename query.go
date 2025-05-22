@@ -12,6 +12,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	tableNameRegex = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]{1,63}$`)
+
+	// Regular expression for valid PostgreSQL column names
+	columnNameRegex = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]{1,63}$`)
+)
+
 // column selector, which may consists of <table>.<column>.
 // When a (foreign) releation is used, the format is:
 //
@@ -19,14 +26,8 @@ import (
 //
 // but that may be nested.
 type ColumnSelector string
+
 type Table string
-
-var (
-	tableNameRegex = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]{1,63}$`)
-
-	// Regular expression for valid PostgreSQL column names
-	columnNameRegex = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]{1,63}$`)
-)
 
 func (t Table) String() string {
 	return string(t)
@@ -68,13 +69,22 @@ func (cs ColumnSelector) IsValid() bool {
 	if cs.String() == "" {
 		return false
 	}
-	xs := strings.Split(string(cs), ".")
-	if len(xs)%2 != 0 {
+	count := strings.Count(string(cs), ".")
+	if count%2 != 1 {
 		return false
 	}
-	if len(xs) < 2 {
-		return false
+	tables, columns := cs.Breakdown()
+	for _, t := range tables {
+		if !t.IsValid() {
+			return false
+		}
 	}
+	for _, c := range columns {
+		if !c.IsValid() {
+			return false
+		}
+	}
+
 	return true
 }
 
