@@ -141,7 +141,6 @@ type ColumnBehavior struct {
 
 // discover base table and all related tables
 func (api *API) Discover(ctx context.Context, conn *pgx.Conn, baseTable Table) (TablesMetadata, error) {
-
 	tables := make(TablesMetadata, 1)
 	err := api.discoverWithRelations(ctx, conn, tables, baseTable)
 	if err != nil {

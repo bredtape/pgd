@@ -1,6 +1,9 @@
 package pgd
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 type DataType string
 
@@ -29,10 +32,8 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("invalid config: defaultLimit above maxLimit")
 	}
 	for dataType, behavior := range c.ColumnDefaults {
-		for _, op := range behavior.FilterOperations {
-			if op == "" {
-				return fmt.Errorf("invalid config: %s: filterOperations cannot contain empty strings", dataType)
-			}
+		if slices.Contains(behavior.FilterOperations, "") {
+			return fmt.Errorf("invalid config: %s: filterOperations cannot contain empty strings", dataType)
 		}
 
 		if behavior.AllowFiltering && len(behavior.FilterOperations) == 0 {
@@ -40,10 +41,8 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	for _, op := range c.ColumnUnknownDefault.FilterOperations {
-		if op == "" {
-			return fmt.Errorf("invalid config: columnUnknownDefault: filterOperations cannot contain empty strings")
-		}
+	if slices.Contains(c.ColumnUnknownDefault.FilterOperations, "") {
+		return fmt.Errorf("invalid config: columnUnknownDefault: filterOperations cannot contain empty strings")
 	}
 	if c.ColumnUnknownDefault.AllowFiltering && len(c.ColumnUnknownDefault.FilterOperations) == 0 {
 		return fmt.Errorf("invalid config: columnUnknownDefault: filterOperations cannot be empty when allowFiltering is true")
