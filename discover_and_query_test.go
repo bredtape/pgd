@@ -10,14 +10,221 @@ import (
 
 // uses table names: tableA, tableB, tableC
 
+type testCase struct {
+	Desc     string
+	Query    Query
+	Expected QueryResult
+}
+
 func TestDiscoverAndQueryData(t *testing.T) {
 	ctx := context.Background()
 
-	tcs := []struct {
-		Desc     string
-		Query    Query
-		Expected QueryResult
-	}{
+	schema := `
+DROP TABLE IF EXISTS "tableA";
+DROP TABLE IF EXISTS "tableB";
+DROP TABLE IF EXISTS "tableC";
+
+CREATE TABLE "tableC" (
+  name TEXT NOT NULL PRIMARY KEY,
+  description TEXT
+);
+
+CREATE TABLE "tableB" (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  other_c TEXT REFERENCES "tableC"(name) -- nullable
+);
+
+CREATE TABLE "tableA" (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  age DOUBLE PRECISION,
+  other_b INTEGER REFERENCES "tableB"(id) NOT NULL,
+	other_b2 INTEGER REFERENCES "tableB"(id)
+);
+
+INSERT INTO "tableC" (name, description) VALUES
+  ('tableC1', 'Description 1'),
+  ('tableC2', 'Description 2'),
+  ('tableC3', 'Description 3');
+
+INSERT INTO "tableB" (id, name, other_c) VALUES
+  (1, 'nameB1', 'tableC1'),
+  (2, 'nameB2', 'tableC2'),
+  (3, 'nameB3', NULL);
+
+INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
+  (4, 'Alice', 30, 1, 2),
+  (5, 'Bob', 25, 2, NULL),
+  (6, 'Charlie', 35, 2, 3);
+`
+	c := Config{
+		ColumnDefaults: map[DataType]ColumnBehavior{
+			DataType("integer"): {
+				AllowSorting:     true,
+				AllowFiltering:   false,
+				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
+			},
+			DataType("text"): {
+				AllowSorting:     false,
+				AllowFiltering:   true,
+				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
+			},
+			DataType("double precision"): {
+				AllowSorting:     false,
+				AllowFiltering:   false,
+				FilterOperations: []FilterOperator{"equal"},
+			}},
+		ColumnUnknownDefault: ColumnBehavior{
+			AllowSorting:     false,
+			AllowFiltering:   false,
+			FilterOperations: nil,
+		}}
+
+	filterInt := []FilterOperator{
+		"equal",
+		"notEqual",
+		"greater",
+		"greaterOrEqual",
+		"less",
+		"lessOrEqual",
+	}
+	filterText := filterInt
+	filterDouble := []FilterOperator{"equal"}
+
+	expectedTables := TablesMetadata{
+		"tableA": TableMetadata{
+			Name: "tableA",
+			Columns: map[Column]ColumnMetadata{
+				"id": {
+					Name:       "id",
+					DataType:   "integer",
+					IsNullable: false,
+					Behavior: ColumnBehavior{
+						AllowSorting:     true,
+						AllowFiltering:   false,
+						FilterOperations: filterInt,
+					},
+				},
+				"name": {
+					Name:       "name",
+					DataType:   "text",
+					IsNullable: false,
+					Behavior: ColumnBehavior{
+						AllowSorting:     false,
+						AllowFiltering:   true,
+						FilterOperations: filterText,
+					},
+				},
+				"age": {
+					Name:       "age",
+					DataType:   "double precision",
+					IsNullable: true,
+					Behavior: ColumnBehavior{
+						AllowSorting:     false,
+						AllowFiltering:   false,
+						FilterOperations: filterDouble,
+					},
+				},
+				"other_b": {
+					Name:       "other_b",
+					DataType:   "integer",
+					IsNullable: false,
+					Relation: &ColumnRelation{
+						Table:  "tableB",
+						Column: "id",
+					},
+					Behavior: ColumnBehavior{
+						AllowSorting:     true,
+						AllowFiltering:   false,
+						FilterOperations: filterInt,
+					},
+				},
+				"other_b2": {
+					Name:       "other_b2",
+					DataType:   "integer",
+					IsNullable: true,
+					Relation: &ColumnRelation{
+						Table:  "tableB",
+						Column: "id",
+					},
+					Behavior: ColumnBehavior{
+						AllowSorting:     true,
+						AllowFiltering:   false,
+						FilterOperations: filterInt,
+					},
+				},
+			},
+			Behavior: TableBehavior{Description: ""},
+		},
+		"tableB": TableMetadata{
+			Name: "tableB",
+			Columns: map[Column]ColumnMetadata{
+				"id": {
+					Name:       "id",
+					DataType:   "integer",
+					IsNullable: false,
+					Behavior: ColumnBehavior{
+						AllowSorting:     true,
+						AllowFiltering:   false,
+						FilterOperations: filterInt,
+					},
+				},
+				"name": {
+					Name:       "name",
+					DataType:   "text",
+					IsNullable: false,
+					Behavior: ColumnBehavior{
+						AllowSorting:     false,
+						AllowFiltering:   true,
+						FilterOperations: filterText,
+					},
+				},
+				"other_c": {
+					Name:       "other_c",
+					DataType:   "text",
+					IsNullable: true,
+					Relation: &ColumnRelation{
+						Table:  "tableC",
+						Column: "name",
+					},
+					Behavior: ColumnBehavior{
+						AllowSorting:     false,
+						AllowFiltering:   true,
+						FilterOperations: filterText,
+					},
+				},
+			},
+			Behavior: TableBehavior{Description: ""},
+		},
+		"tableC": TableMetadata{
+			Name: "tableC",
+			Columns: map[Column]ColumnMetadata{
+				"name": {
+					Name:       "name",
+					DataType:   "text",
+					IsNullable: false,
+					Behavior: ColumnBehavior{
+						AllowSorting:     false,
+						AllowFiltering:   true,
+						FilterOperations: filterText,
+					},
+				},
+				"description": {
+					Name:       "description",
+					DataType:   "text",
+					IsNullable: true,
+					Behavior: ColumnBehavior{
+						AllowSorting:     false,
+						AllowFiltering:   true,
+						FilterOperations: filterText,
+					},
+				},
+			},
+			Behavior: TableBehavior{Description: ""},
+		},
+	}
+	tcs := []testCase{
 		{
 			Desc: "Select all columns from tableA",
 			Query: Query{
@@ -209,68 +416,199 @@ func TestDiscoverAndQueryData(t *testing.T) {
 		},
 	}
 
+	runTests(ctx, t, c, schema, "tableA", expectedTables, tcs)
+}
+
+func TestDiscoverAndQueryDataWithEnums(t *testing.T) {
+	ctx := context.Background()
+
 	schema := `
-DROP TABLE IF EXISTS "tableA";
-DROP TABLE IF EXISTS "tableB";
-DROP TABLE IF EXISTS "tableC";
+DROP TABLE IF EXISTS "tableD";
 
-CREATE TABLE "tableC" (
-  name TEXT NOT NULL PRIMARY KEY,
-  description TEXT
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN
+        CREATE TYPE user_status AS ENUM ('active', 'inactive', 'pending');
+    END IF;
+END
+$$;
 
-CREATE TABLE "tableB" (
+CREATE TABLE "tableD" (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
-  other_c TEXT REFERENCES "tableC"(name) -- nullable
+  status user_status NOT NULL
 );
 
-CREATE TABLE "tableA" (
-  id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
-  age DOUBLE PRECISION,
-  other_b INTEGER REFERENCES "tableB"(id) NOT NULL,
-	other_b2 INTEGER REFERENCES "tableB"(id)
-);
-
-INSERT INTO "tableC" (name, description) VALUES
-  ('tableC1', 'Description 1'),
-  ('tableC2', 'Description 2'),
-  ('tableC3', 'Description 3');
-
-INSERT INTO "tableB" (id, name, other_c) VALUES
-  (1, 'nameB1', 'tableC1'),
-  (2, 'nameB2', 'tableC2'),
-  (3, 'nameB3', NULL);
-
-INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
-  (4, 'Alice', 30, 1, 2),
-  (5, 'Bob', 25, 2, NULL),
-  (6, 'Charlie', 35, 2, 3);
+INSERT INTO "tableD" (id, name, status) VALUES
+  (1, 'Alice', 'active'),
+  (2, 'Bob', 'inactive'),
+  (3, 'Charlie', 'pending');
 `
+
+	filterInt := []FilterOperator{
+		"equal",
+		"notEqual",
+		"greater",
+		"greaterOrEqual",
+		"less",
+		"lessOrEqual",
+	}
+	filterTextWithContains := []FilterOperator{
+		"equal",
+		"notEqual",
+		"contains",
+	}
+	filterEnum := []FilterOperator{
+		"equal",
+		"notEqual",
+	}
+
+	expectedTables := TablesMetadata{
+		"tableD": TableMetadata{
+			Name: "tableD",
+			Columns: map[Column]ColumnMetadata{
+				"id": {
+					Name:       "id",
+					DataType:   "integer",
+					IsNullable: false,
+					Behavior: ColumnBehavior{
+						AllowSorting:     true,
+						AllowFiltering:   true,
+						FilterOperations: filterInt,
+					},
+				},
+				"name": {
+					Name:       "name",
+					DataType:   "text",
+					IsNullable: false,
+					Behavior: ColumnBehavior{
+						AllowSorting:     false,
+						AllowFiltering:   true,
+						FilterOperations: filterTextWithContains,
+					},
+				},
+				"status": {
+					Name:       "status",
+					DataType:   "user_status",
+					IsNullable: false,
+					Behavior: ColumnBehavior{
+						AllowSorting:     true,
+						AllowFiltering:   true,
+						FilterOperations: filterEnum,
+					},
+				},
+			},
+			Behavior: TableBehavior{Description: ""},
+		},
+	}
+
+	tcs := []testCase{
+		{
+			Desc: "Select all columns from tableD with enum",
+			Query: Query{
+				Select: []ColumnSelector{
+					"tableD.id",
+					"tableD.name",
+					"tableD.status",
+				},
+				Limit: 5},
+			Expected: QueryResult{
+				Data: []map[string]any{
+					{"tableD.id": int32(1), "tableD.name": "Alice", "tableD.status": "active"},
+					{"tableD.id": int32(2), "tableD.name": "Bob", "tableD.status": "inactive"},
+					{"tableD.id": int32(3), "tableD.name": "Charlie", "tableD.status": "pending"},
+				},
+				Limit: 5,
+				Total: 3,
+			},
+		},
+		{
+			Desc: "Filter by enum value",
+			Query: Query{
+				Select: []ColumnSelector{
+					"tableD.id",
+					"tableD.name",
+					"tableD.status",
+				},
+				Where: &WhereExpression{
+					Filter: &Filter{
+						Column:   "tableD.status",
+						Operator: "equal",
+						Value:    "active",
+					},
+				},
+				Limit: 5},
+			Expected: QueryResult{
+				Data: []map[string]any{
+					{"tableD.id": int32(1), "tableD.name": "Alice", "tableD.status": "active"},
+				},
+				Limit: 5,
+				Total: 1,
+			},
+		},
+		{
+			Desc: "Multiple enum filters with OR",
+			Query: Query{
+				Select: []ColumnSelector{
+					"tableD.id",
+					"tableD.name",
+					"tableD.status",
+				},
+				Where: &WhereExpression{
+					Or: []WhereExpression{
+						{Filter: &Filter{
+							Column:   "tableD.status",
+							Operator: "equal",
+							Value:    "active",
+						}},
+						{Filter: &Filter{
+							Column:   "tableD.status",
+							Operator: "equal",
+							Value:    "pending",
+						}},
+					},
+				},
+				Limit: 5},
+			Expected: QueryResult{
+				Data: []map[string]any{
+					{"tableD.id": int32(1), "tableD.name": "Alice", "tableD.status": "active"},
+					{"tableD.id": int32(3), "tableD.name": "Charlie", "tableD.status": "pending"},
+				},
+				Limit: 5,
+				Total: 2,
+			},
+		},
+	}
 
 	c := Config{
 		ColumnDefaults: map[DataType]ColumnBehavior{
 			DataType("integer"): {
 				AllowSorting:     true,
-				AllowFiltering:   false,
+				AllowFiltering:   true,
 				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
 			},
 			DataType("text"): {
 				AllowSorting:     false,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
+				FilterOperations: []FilterOperator{"equal", "notEqual", "contains"},
 			},
-			DataType("double precision"): {
-				AllowSorting:     false,
-				AllowFiltering:   false,
-				FilterOperations: []FilterOperator{"equal"},
-			}},
+			DataType("user_status"): {
+				AllowSorting:     true,
+				AllowFiltering:   true,
+				FilterOperations: []FilterOperator{"equal", "notEqual"},
+			},
+		},
 		ColumnUnknownDefault: ColumnBehavior{
 			AllowSorting:     false,
 			AllowFiltering:   false,
 			FilterOperations: nil,
-		}}
+		},
+	}
+
+	runTests(ctx, t, c, schema, "tableD", expectedTables, tcs)
+}
+
+func runTests(ctx context.Context, t *testing.T, c Config, schema string, baseTable Table, expectedTables TablesMetadata, tcs []testCase) {
 
 	api, err := NewAPI(c)
 	if err != nil {
@@ -283,25 +621,25 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 	}
 	defer db.Close(ctx)
 
-	Convey("Apply schema", t, func() {
+	Convey(fmt.Sprintf("Unit test %s, base table %s. Apply schema", t.Name(), baseTable), t, func() {
 		_, err = db.Exec(ctx, schema)
 		So(err, ShouldBeNil)
 
-		Convey("Discover from base tableA", func() {
-			tables, err := api.Discover(ctx, db, "tableA")
+		Convey("Discover from base", func() {
+			tables, err := api.Discover(ctx, db, baseTable)
 			So(err, ShouldBeNil)
 
 			Convey("should have table metadata", func() {
-				So(tables, ShouldHaveLength, 3)
+				So(tables, ShouldResemble, expectedTables)
 			})
 
 			for idx, tc := range tcs {
 				Convey(fmt.Sprintf("index %d, %s", idx, tc.Desc), func() {
-					result, _, err := api.Query(ctx, db, tables, tc.Query)
-					//result, debug, err := api.Query(ctx, db, tables, tc.Query)
-					// if debug.PageSQL != "" {
-					// 	Printf("debug page sql: '%s'\ntotal sql: '%s'\n", debug.PageSQL, debug.TotalSQL)
-					// }
+					//result, _, err := api.Query(ctx, db, tables, tc.Query)
+					result, debug, err := api.Query(ctx, db, tables, tc.Query)
+					if debug.PageSQL != "" {
+						Printf("debug page sql: '%s'\ntotal sql: '%s'\n", debug.PageSQL, debug.TotalSQL)
+					}
 					So(err, ShouldBeNil)
 
 					Convey("should have query result", func() {
