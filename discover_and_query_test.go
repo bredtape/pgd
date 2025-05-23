@@ -48,9 +48,9 @@ func TestDiscoverAndQueryData(t *testing.T) {
 				},
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column: "tableA.name",
-						Op:     "equal",
-						Value:  "Bob"},
+						Column:   "tableA.name",
+						Operator: "equal",
+						Value:    "Bob"},
 				},
 				Limit: 5},
 			Expected: QueryResult{
@@ -90,9 +90,9 @@ func TestDiscoverAndQueryData(t *testing.T) {
 				},
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column: "tableA.name",
-						Op:     "equal",
-						Value:  "Bob"}},
+						Column:   "tableA.name",
+						Operator: "equal",
+						Value:    "Bob"}},
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
@@ -112,9 +112,9 @@ func TestDiscoverAndQueryData(t *testing.T) {
 				},
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column: "tableA.other_b.tableB.name",
-						Op:     "equal",
-						Value:  "nameB1"}},
+						Column:   "tableA.other_b.tableB.name",
+						Operator: "equal",
+						Value:    "nameB1"}},
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
@@ -158,14 +158,14 @@ func TestDiscoverAndQueryData(t *testing.T) {
 				Where: &WhereExpression{
 					Or: []WhereExpression{
 						{Filter: &Filter{
-							Column: "tableA.other_b.tableB.id",
-							Op:     "equal",
-							Value:  nil,
+							Column:   "tableA.other_b.tableB.id",
+							Operator: "equal",
+							Value:    nil,
 						}},
 						{Filter: &Filter{
-							Column: "tableA.other_b.tableB.id",
-							Op:     "notEqual",
-							Value:  1,
+							Column:   "tableA.other_b.tableB.id",
+							Operator: "notEqual",
+							Value:    1,
 						}},
 					}},
 				Limit: 5,
@@ -190,9 +190,9 @@ func TestDiscoverAndQueryData(t *testing.T) {
 				},
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column: "tableA.other_b.tableB.other_c.tableC.description",
-						Op:     "contains",
-						Value:  " ",
+						Column:   "tableA.other_b.tableB.other_c.tableC.description",
+						Operator: "contains",
+						Value:    " ",
 					},
 				},
 				Limit: 5,
@@ -254,17 +254,17 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			DataType("integer"): {
 				AllowSorting:     true,
 				AllowFiltering:   false,
-				FilterOperations: []FilterOp{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
+				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
 			},
 			DataType("text"): {
 				AllowSorting:     false,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOp{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
+				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
 			},
 			DataType("double precision"): {
 				AllowSorting:     false,
 				AllowFiltering:   false,
-				FilterOperations: []FilterOp{"equal"},
+				FilterOperations: []FilterOperator{"equal"},
 			}},
 		ColumnUnknownDefault: ColumnBehavior{
 			AllowSorting:     false,
@@ -297,10 +297,11 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 
 			for idx, tc := range tcs {
 				Convey(fmt.Sprintf("index %d, %s", idx, tc.Desc), func() {
-					result, debug, err := api.Query(ctx, db, tables, tc.Query)
-					if debug.PageSQL != "" {
-						Printf("debug page sql: '%s'\ntotal sql: '%s'\n", debug.PageSQL, debug.TotalSQL)
-					}
+					result, _, err := api.Query(ctx, db, tables, tc.Query)
+					//result, debug, err := api.Query(ctx, db, tables, tc.Query)
+					// if debug.PageSQL != "" {
+					// 	Printf("debug page sql: '%s'\ntotal sql: '%s'\n", debug.PageSQL, debug.TotalSQL)
+					// }
 					So(err, ShouldBeNil)
 
 					Convey("should have query result", func() {

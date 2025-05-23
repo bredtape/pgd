@@ -22,17 +22,17 @@ func TestDiscoverSimpleTable1(t *testing.T) {
 			DataType("integer"): {
 				AllowSorting:     true,
 				AllowFiltering:   false,
-				FilterOperations: []FilterOp{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
+				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
 			},
 			DataType("text"): {
 				AllowSorting:     false,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOp{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
+				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
 			},
 			DataType("double precision"): {
 				AllowSorting:     false,
 				AllowFiltering:   false,
-				FilterOperations: []FilterOp{"equal"},
+				FilterOperations: []FilterOperator{"equal"},
 			}},
 		ColumnUnknownDefault: ColumnBehavior{
 			AllowSorting:     false,
@@ -87,7 +87,7 @@ COMMENT ON COLUMN table1.age IS E'{"description": "age desc", "allowSorting": tr
 					Description:      "name desc",
 					AllowSorting:     false,
 					AllowFiltering:   true,
-					FilterOperations: []FilterOp{"contains", "equal", "greater", "greaterOrEqual", "less", "lessOrEqual", "notContains", "notEqual"}},
+					FilterOperations: []FilterOperator{"contains", "equal", "greater", "greaterOrEqual", "less", "lessOrEqual", "notContains", "notEqual"}},
 			},
 			"age": {
 				Name:       "age",
@@ -97,7 +97,7 @@ COMMENT ON COLUMN table1.age IS E'{"description": "age desc", "allowSorting": tr
 					Description:      "age desc",
 					AllowSorting:     true,
 					AllowFiltering:   true,
-					FilterOperations: []FilterOp{"equal", "notEqual"}},
+					FilterOperations: []FilterOperator{"equal", "notEqual"}},
 			},
 			"description": { // no comment on this column. Should have default behavior
 				Name:       "description",
@@ -107,7 +107,7 @@ COMMENT ON COLUMN table1.age IS E'{"description": "age desc", "allowSorting": tr
 					Description:      "",
 					AllowSorting:     false,
 					AllowFiltering:   true,
-					FilterOperations: []FilterOp{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"}},
+					FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"}},
 			},
 		}}
 
@@ -130,7 +130,7 @@ COMMENT ON COLUMN table1.age IS E'{"description": "age desc", "allowSorting": tr
 func TestDiscoverTableWithRelation(t *testing.T) {
 	ctx := context.Background()
 
-	defaultFilterOperations := []FilterOp{"equal", "notEqual"}
+	defaultFilterOperations := []FilterOperator{"equal", "notEqual"}
 
 	c := Config{
 		ColumnDefaults: map[DataType]ColumnBehavior{
@@ -181,7 +181,7 @@ CREATE TABLE table2 (
 						Description:      "",
 						AllowSorting:     true,
 						AllowFiltering:   true,
-						FilterOperations: []FilterOp{"equal", "notEqual"}},
+						FilterOperations: []FilterOperator{"equal", "notEqual"}},
 				},
 				"name": {
 					Name:       "name",
@@ -191,7 +191,7 @@ CREATE TABLE table2 (
 						Description:      "",
 						AllowSorting:     false,
 						AllowFiltering:   true,
-						FilterOperations: []FilterOp{"equal", "notEqual"}},
+						FilterOperations: []FilterOperator{"equal", "notEqual"}},
 				},
 				"other": {
 					Name:       "other",
@@ -201,7 +201,7 @@ CREATE TABLE table2 (
 						Description:      "",
 						AllowSorting:     true,
 						AllowFiltering:   true,
-						FilterOperations: []FilterOp{"equal", "notEqual"}},
+						FilterOperations: []FilterOperator{"equal", "notEqual"}},
 					Relation: &ColumnRelation{
 						Table:  "table3",
 						Column: "other_id"},
@@ -217,7 +217,7 @@ CREATE TABLE table2 (
 						Description:      "",
 						AllowSorting:     true,
 						AllowFiltering:   true,
-						FilterOperations: []FilterOp{"equal", "notEqual"}},
+						FilterOperations: []FilterOperator{"equal", "notEqual"}},
 				},
 				"other_name": {
 					Name:     "other_name",
@@ -226,7 +226,7 @@ CREATE TABLE table2 (
 						Description:      "",
 						AllowSorting:     false,
 						AllowFiltering:   true,
-						FilterOperations: []FilterOp{"equal", "notEqual"}},
+						FilterOperations: []FilterOperator{"equal", "notEqual"}},
 				},
 			},
 		},

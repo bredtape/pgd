@@ -136,7 +136,7 @@ type ColumnBehavior struct {
 	// whether to disable, enable or use default option for filter operations
 	OmitDefaultFilterOperations bool `json:"omitDefaultFilterOperations"`
 	// set of allowed filter operations, in addition to the default ones
-	FilterOperations []FilterOp `json:"filterOperations"`
+	FilterOperations []FilterOperator `json:"filterOperations"`
 }
 
 // discover base table and all related tables

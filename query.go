@@ -135,22 +135,22 @@ func ColumnSelectorRebuild(tables []Table, columns []Column) ColumnSelector {
 }
 
 type OrderByExpression struct {
-	ColumnSelector ColumnSelector
-	Descending     bool
+	ColumnSelector ColumnSelector `json:"column"`
+	IsDescending   bool           `json:"isDescending"`
 }
 
 type Query struct {
-	Select  []ColumnSelector
-	Where   *WhereExpression
-	OrderBy []OrderByExpression
-	Limit   uint64
-	Offset  uint64
+	Select  []ColumnSelector    `json:"select"`
+	Where   *WhereExpression    `json:"where"`
+	OrderBy []OrderByExpression `json:"orderBy"`
+	Limit   uint64              `json:"limit"`
+	Offset  uint64              `json:"offset"`
 }
 
 type QueryResult struct {
-	Data  []map[string]any // data returned from the query by column name
-	Limit uint64           // actual limit
-	Total uint64           // total number of rows matching the query
+	Data  []map[string]any `json:"data"`  // data returned from the query by column name
+	Limit uint64           `json:"limit"` // actual limit
+	Total uint64           `json:"total"` // total number of rows matching the query
 }
 
 func (q Query) Validate() error {
@@ -318,7 +318,7 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 			return emptySelect, emptySelect, fmt.Errorf("invalid order by column selector %s, not used in select", c.ColumnSelector.String())
 		}
 
-		if c.Descending {
+		if c.IsDescending {
 			qPage = qPage.OrderBy(c.ColumnSelector.StringQuoted() + " DESC")
 		} else {
 			qPage = qPage.OrderBy(c.ColumnSelector.StringQuoted())

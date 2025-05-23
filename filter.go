@@ -8,11 +8,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-type FilterOp string
+type FilterOperator string
 
 var (
 	// supported 'where' operations from name to func(column, value) -> (sq.Sqlizer, error)
-	filterOperations = map[FilterOp](func(string, any) (sq.Sqlizer, error)){
+	filterOperations = map[FilterOperator](func(string, any) (sq.Sqlizer, error)){
 		"contains": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
 			if !ok {
@@ -72,9 +72,9 @@ func (expr WhereExpression) toSqlChild2() (sq.Sqlizer, set.Set[ColumnSelector], 
 
 	if expr.Filter != nil {
 		f := *expr.Filter
-		op, exists := filterOperations[f.Op]
+		op, exists := filterOperations[f.Operator]
 		if !exists {
-			return nil, nil, fmt.Errorf("unsupported filter operation: %s", f.Op)
+			return nil, nil, fmt.Errorf("unsupported filter operation: %s", f.Operator)
 		}
 		cols := map[ColumnSelector]struct{}{expr.Filter.Column: {}}
 
@@ -123,9 +123,9 @@ func (expr WhereExpression) toSqlChild2() (sq.Sqlizer, set.Set[ColumnSelector], 
 // where/fitler expression
 // Must have exactly one of And, Or, Not or Filter set.
 type WhereExpression struct {
-	And    []WhereExpression
-	Or     []WhereExpression
-	Filter *Filter
+	And    []WhereExpression `json:"and"`
+	Or     []WhereExpression `json:"or"`
+	Filter *Filter           `json:"filter"`
 }
 
 func (f WhereExpression) Validate() error {
@@ -173,16 +173,16 @@ func (f WhereExpression) validate(parent string) error {
 }
 
 type Filter struct {
-	Column ColumnSelector
-	Op     FilterOp
-	Value  any
+	Column   ColumnSelector `json:"column"`
+	Operator FilterOperator `json:"operator"`
+	Value    any            `json:"value"`
 }
 
 func (f Filter) Validate() error {
 	if f.Column == "" {
 		return fmt.Errorf("missing column")
 	}
-	if f.Op == "" {
+	if f.Operator == "" {
 		return fmt.Errorf("missing operator")
 	}
 	return nil

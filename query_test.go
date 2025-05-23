@@ -90,9 +90,9 @@ func TestConvertQuery(t *testing.T) {
 				},
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column: "table1.name",
-						Op:     "equal",
-						Value:  "John Doe",
+						Column:   "table1.name",
+						Operator: "equal",
+						Value:    "John Doe",
 					},
 				},
 				Limit: 10,
@@ -124,7 +124,7 @@ func TestConvertQuery(t *testing.T) {
 					"table1.name",
 					"table1.age",
 				},
-				OrderBy: []OrderByExpression{{ColumnSelector: "table1.name", Descending: true}},
+				OrderBy: []OrderByExpression{{ColumnSelector: "table1.name", IsDescending: true}},
 				Limit:   10,
 			},
 			expectedQuery:      `SELECT "table1"."id", "table1"."name", "table1"."age" FROM "table1" ORDER BY "table1"."name" DESC LIMIT 10 OFFSET 0`,
@@ -139,7 +139,7 @@ func TestConvertQuery(t *testing.T) {
 					"table1.age",
 				},
 				OrderBy: []OrderByExpression{
-					{ColumnSelector: "table1.name", Descending: true},
+					{ColumnSelector: "table1.name", IsDescending: true},
 					{ColumnSelector: "table1.age"}},
 				Limit: 10,
 			},
@@ -158,15 +158,15 @@ func TestConvertQuery(t *testing.T) {
 					And: []WhereExpression{
 						{
 							Filter: &Filter{
-								Column: ColumnSelector("table1.name"),
-								Op:     "equal",
-								Value:  "John Doe",
+								Column:   ColumnSelector("table1.name"),
+								Operator: "equal",
+								Value:    "John Doe",
 							}},
 						{
 							Filter: &Filter{
-								Column: ColumnSelector("table1.age"),
-								Op:     "greater",
-								Value:  30,
+								Column:   ColumnSelector("table1.age"),
+								Operator: "greater",
+								Value:    30,
 							}},
 					}},
 				Limit: 10,
