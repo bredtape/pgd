@@ -60,9 +60,9 @@ CREATE TABLE table1 (
   description TEXT
 );
 
-COMMENT ON COLUMN table1.id IS E'{"description": "ID column"}';
-COMMENT ON COLUMN table1.name IS E'{"description": "name desc","filterOperations": ["contains", "notContains"]}';
-COMMENT ON COLUMN table1.age IS E'{"description": "age desc", "allowSorting": true, "allowFiltering": true, "filterOperations": ["equal", "notEqual"]}';
+COMMENT ON COLUMN table1.id IS E'{"properties": {"key1": "value1", "key2": "value2"}}';
+COMMENT ON COLUMN table1.name IS E'{"properties": {"key3": "value3"},"filterOperations": ["contains", "notContains"]}';
+COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "description": "age desc", "allowSorting": true, "allowFiltering": true, "filterOperations": ["equal", "notEqual"]}';
 
 `
 
@@ -74,7 +74,7 @@ COMMENT ON COLUMN table1.age IS E'{"description": "age desc", "allowSorting": tr
 				DataType:   "integer",
 				IsNullable: false,
 				Behavior: ColumnBehavior{
-					Description:      "ID column",
+					Properties:       map[string]string{"key1": "value1", "key2": "value2"},
 					AllowSorting:     true,
 					AllowFiltering:   false,
 					FilterOperations: nil},
@@ -84,7 +84,7 @@ COMMENT ON COLUMN table1.age IS E'{"description": "age desc", "allowSorting": tr
 				DataType:   "text",
 				IsNullable: false,
 				Behavior: ColumnBehavior{
-					Description:      "name desc",
+					Properties:       map[string]string{"key3": "value3"},
 					AllowSorting:     false,
 					AllowFiltering:   true,
 					FilterOperations: []FilterOperator{"contains", "equal", "greater", "greaterOrEqual", "less", "lessOrEqual", "notContains", "notEqual"}},
@@ -94,7 +94,7 @@ COMMENT ON COLUMN table1.age IS E'{"description": "age desc", "allowSorting": tr
 				DataType:   "double precision",
 				IsNullable: true,
 				Behavior: ColumnBehavior{
-					Description:      "age desc",
+					Properties:       map[string]string{"key4": "value4"},
 					AllowSorting:     true,
 					AllowFiltering:   true,
 					FilterOperations: []FilterOperator{"equal", "notEqual"}},
@@ -104,7 +104,7 @@ COMMENT ON COLUMN table1.age IS E'{"description": "age desc", "allowSorting": tr
 				DataType:   "text",
 				IsNullable: true,
 				Behavior: ColumnBehavior{
-					Description:      "",
+					Properties:       nil,
 					AllowSorting:     false,
 					AllowFiltering:   true,
 					FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"}},
@@ -178,7 +178,6 @@ CREATE TABLE table2 (
 					DataType:   "integer",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
-						Description:      "",
 						AllowSorting:     true,
 						AllowFiltering:   true,
 						FilterOperations: []FilterOperator{"equal", "notEqual"}},
@@ -188,7 +187,6 @@ CREATE TABLE table2 (
 					DataType:   "text",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
-						Description:      "",
 						AllowSorting:     false,
 						AllowFiltering:   true,
 						FilterOperations: []FilterOperator{"equal", "notEqual"}},
@@ -198,7 +196,6 @@ CREATE TABLE table2 (
 					DataType:   "integer",
 					IsNullable: true,
 					Behavior: ColumnBehavior{
-						Description:      "",
 						AllowSorting:     true,
 						AllowFiltering:   true,
 						FilterOperations: []FilterOperator{"equal", "notEqual"}},
@@ -214,7 +211,6 @@ CREATE TABLE table2 (
 					Name:     "other_id",
 					DataType: "integer",
 					Behavior: ColumnBehavior{
-						Description:      "",
 						AllowSorting:     true,
 						AllowFiltering:   true,
 						FilterOperations: []FilterOperator{"equal", "notEqual"}},
@@ -223,7 +219,6 @@ CREATE TABLE table2 (
 					Name:     "other_name",
 					DataType: "text",
 					Behavior: ColumnBehavior{
-						Description:      "",
 						AllowSorting:     false,
 						AllowFiltering:   true,
 						FilterOperations: []FilterOperator{"equal", "notEqual"}},

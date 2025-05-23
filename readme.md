@@ -10,7 +10,7 @@ Comments may be placed on columns to provide additional metadata. The comment mu
 
 ```json
 {
-  "description": "string",
+  "properties": { "key1": "value1", "key2": "value2" },
   "allowSorting": "bool",
   "allowFiltering": "bool",
   "omitDefaultFilterOperations": "bool",
