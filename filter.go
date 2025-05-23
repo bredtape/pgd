@@ -11,7 +11,7 @@ import (
 type FilterOp string
 
 var (
-	// supported where operations from name to func(column, value) -> sq.Sqlizer
+	// supported 'where' operations from name to func(column, value) -> (sq.Sqlizer, error)
 	filterOperations = map[FilterOp](func(string, any) (sq.Sqlizer, error)){
 		"contains": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
@@ -135,10 +135,10 @@ func (f WhereExpression) validate(parent string) error {
 	}
 
 	if active == 0 {
-		return fmt.Errorf("missing where at %s", parent)
+		return fmt.Errorf("missing expression at %s", parent)
 	}
 	if active > 1 {
-		return fmt.Errorf("multiple where types at %s", parent)
+		return fmt.Errorf("multiple expressions at %s", parent)
 	}
 
 	return nil

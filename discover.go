@@ -11,9 +11,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const defaultSchema = "public"
-const defaultLimit = 200
-const maxLimit = 1000
+const (
+	defaultSchema = "public"
+	defaultLimit  = 200
+	maxLimit      = 1000
+)
 
 type API struct {
 	c Config
@@ -373,7 +375,6 @@ func (api *API) parseAndMergeColumnBehavior(dataType DataType, raw *string) (Col
 	}
 
 	return b, nil
-
 }
 
 func uniqueSliceString[T ~string](xs []T) []T {
