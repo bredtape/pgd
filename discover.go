@@ -9,6 +9,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/bredtape/set"
 	"github.com/jackc/pgx/v5"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -168,7 +169,7 @@ func (api *API) discoverWithRelations(ctx context.Context, conn *pgx.Conn, known
 		if _, exists := known[table]; !exists {
 			err = api.discoverWithRelations(ctx, conn, known, table)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "failed to discover related table metadata")
 			}
 		}
 	}
@@ -247,7 +248,12 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 	batch.Queue(fkQuery, fkArgs...)
 
 	// Execute the batch
-	results := conn.SendBatch(ctx, batch)
+	tx, err := conn.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Commit(ctx)
+	results := tx.SendBatch(ctx, batch)
 	defer results.Close()
 
 	// Process table info results

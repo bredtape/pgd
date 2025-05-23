@@ -204,7 +204,12 @@ func (api *API) Query(ctx context.Context, db *pgx.Conn, tables TablesMetadata, 
 		TotalSQL:  sqlTotal,
 		TotalArgs: argsTotal}
 
-	batchResults := db.SendBatch(ctx, batch)
+	tx, err := db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return QueryResult{}, debug, errors.Wrap(err, "failed to begin transaction")
+	}
+	defer tx.Commit(ctx)
+	batchResults := tx.SendBatch(ctx, batch)
 	defer batchResults.Close()
 
 	var total uint64
