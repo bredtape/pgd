@@ -20,6 +20,20 @@ var (
 			}
 			return sq.Like{s: "%" + vs + "%"}, nil
 		},
+		"containsInsensitive": func(s string, v any) (sq.Sqlizer, error) {
+			vs, ok := (v).(string)
+			if !ok {
+				return nil, errors.New("contains only supported for string")
+			}
+			return sq.ILike{s: "%" + vs + "%"}, nil
+		},
+		"endsWith": func(s string, v any) (sq.Sqlizer, error) {
+			vs, ok := (v).(string)
+			if !ok {
+				return nil, errors.New("contains only supported for string")
+			}
+			return sq.Like{s: "%" + vs}, nil
+		},
 		"equal":          func(s string, v any) (sq.Sqlizer, error) { return sq.Eq{s: v}, nil },
 		"greater":        func(s string, v any) (sq.Sqlizer, error) { return sq.Gt{s: v}, nil },
 		"greaterOrEqual": func(s string, v any) (sq.Sqlizer, error) { return sq.GtOrEq{s: v}, nil },
@@ -32,7 +46,21 @@ var (
 			}
 			return sq.NotLike{s: "%" + vs + "%"}, nil
 		},
+		"notContainsInsensitive": func(s string, v any) (sq.Sqlizer, error) {
+			vs, ok := (v).(string)
+			if !ok {
+				return nil, errors.New("contains only supported for string")
+			}
+			return sq.NotILike{s: "%" + vs + "%"}, nil
+		},
 		"notEqual": func(s string, v any) (sq.Sqlizer, error) { return sq.NotEq{s: v}, nil },
+		"startsWith": func(s string, v any) (sq.Sqlizer, error) {
+			vs, ok := (v).(string)
+			if !ok {
+				return nil, errors.New("contains only supported for string")
+			}
+			return sq.Like{s: vs + "%"}, nil
+		},
 	}
 )
 
