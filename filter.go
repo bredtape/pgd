@@ -2,6 +2,7 @@ package pgd
 
 import (
 	"fmt"
+	"slices"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/bredtape/set"
@@ -63,6 +64,15 @@ var (
 		},
 	}
 )
+
+func GetFilterOperations() []FilterOperator {
+	keys := make([]FilterOperator, 0, len(filterOperations))
+	for k := range filterOperations {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	return keys
+}
 
 func (expr *WhereExpression) toSql() (sq.Sqlizer, set.Set[ColumnSelector], error) {
 	return expr.toSqlChild2()
