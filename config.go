@@ -14,7 +14,6 @@ type Config struct {
 	DefaultLimit uint64 `json:"defaultLimit"`
 
 	// ColumnDefaults is a map of default column behaviors for specific data types
-	// Any OptionalBool must either be true or false
 	ColumnDefaults map[DataType]ColumnBehavior `json:"columnDefaults"`
 
 	// Column Behavior for unknown data types
