@@ -148,6 +148,14 @@ type Query struct {
 	Offset  uint64              `json:"offset"`
 }
 
+// get base table of the query. Assumes select statement is not empty
+func (q Query) GetBasetable() Table {
+	if len(q.Select) == 0 {
+		return ""
+	}
+	return q.Select[0].GetBasetable()
+}
+
 type QueryResult struct {
 	Data  []map[string]any `json:"data"`  // data returned from the query by column name
 	Limit uint64           `json:"limit"` // actual limit
