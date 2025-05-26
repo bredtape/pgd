@@ -3,6 +3,7 @@ package pgd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 
@@ -173,6 +174,15 @@ type QueryDebug struct {
 	PageArgs  []any
 	TotalSQL  string
 	TotalArgs []any
+}
+
+func (qd QueryDebug) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("pageSQL", qd.PageSQL),
+		slog.Any("pageArgs", qd.PageArgs),
+		slog.String("totalSQL", qd.TotalSQL),
+		slog.Any("totalArgs", qd.TotalArgs),
+	)
 }
 
 func (api *API) Query(ctx context.Context, db *pgx.Conn, tables TablesMetadata, query Query) (QueryResult, QueryDebug, error) {
