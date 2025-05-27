@@ -17,21 +17,21 @@ var (
 		"contains": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
 			if !ok {
-				return nil, errors.New("contains only supported for string")
+				return nil, errors.New("only supported for string")
 			}
 			return sq.Like{s: "%" + vs + "%"}, nil
 		},
 		"containsInsensitive": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
 			if !ok {
-				return nil, errors.New("contains only supported for string")
+				return nil, errors.New("only supported for string")
 			}
 			return sq.ILike{s: "%" + vs + "%"}, nil
 		},
 		"endsWith": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
 			if !ok {
-				return nil, errors.New("contains only supported for string")
+				return nil, errors.New("only supported for string")
 			}
 			return sq.Like{s: "%" + vs}, nil
 		},
@@ -43,14 +43,14 @@ var (
 		"notContains": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
 			if !ok {
-				return nil, errors.New("contains only supported for string")
+				return nil, errors.New("only supported for string")
 			}
 			return sq.NotLike{s: "%" + vs + "%"}, nil
 		},
 		"notContainsInsensitive": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
 			if !ok {
-				return nil, errors.New("contains only supported for string")
+				return nil, errors.New("only supported for string")
 			}
 			return sq.NotILike{s: "%" + vs + "%"}, nil
 		},
@@ -58,7 +58,7 @@ var (
 		"startsWith": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
 			if !ok {
-				return nil, errors.New("contains only supported for string")
+				return nil, errors.New("only supported for string")
 			}
 			return sq.Like{s: vs + "%"}, nil
 		},
