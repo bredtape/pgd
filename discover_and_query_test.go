@@ -229,18 +229,19 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Desc: "Select all columns from tableA",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableA.id",
-					"tableA.name",
-					"tableA.age",
-					"tableA.other_b",
-					"tableA.other_b2",
+					"id",
+					"name",
+					"age",
+					"other_b",
+					"other_b2",
 				},
+				From:  "tableA",
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableA.id": int32(4), "tableA.name": "Alice", "tableA.age": 30.0, "tableA.other_b": int32(1), "tableA.other_b2": int32(2)},
-					{"tableA.id": int32(5), "tableA.name": "Bob", "tableA.age": 25.0, "tableA.other_b": int32(2), "tableA.other_b2": nil},
-					{"tableA.id": int32(6), "tableA.name": "Charlie", "tableA.age": 35.0, "tableA.other_b": int32(2), "tableA.other_b2": int32(3)},
+					{"id": int32(4), "name": "Alice", "age": 30.0, "other_b": int32(1), "other_b2": int32(2)},
+					{"id": int32(5), "name": "Bob", "age": 25.0, "other_b": int32(2), "other_b2": nil},
+					{"id": int32(6), "name": "Charlie", "age": 35.0, "other_b": int32(2), "other_b2": int32(3)},
 				},
 				Limit: 5,
 				Total: 3,
@@ -250,19 +251,20 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Desc: "select columns from a, simple filter",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableA.id",
-					"tableA.name",
+					"id",
+					"name",
 				},
+				From: "tableA",
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column:   "tableA.name",
+						Column:   "name",
 						Operator: "equal",
 						Value:    "Bob"},
 				},
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableA.id": int32(5), "tableA.name": "Bob"},
+					{"id": int32(5), "name": "Bob"},
 				},
 				Limit: 5,
 				Total: 1,
@@ -272,16 +274,17 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Desc: "select some columns from a and b",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableA.id",
-					"tableA.name",
-					"tableA.other_b.tableB.name",
+					"id",
+					"name",
+					"other_b.tableB.name",
 				},
+				From:  "tableA",
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableA.id": int32(4), "tableA.name": "Alice", "tableA.other_b.tableB.name": "nameB1"},
-					{"tableA.id": int32(5), "tableA.name": "Bob", "tableA.other_b.tableB.name": "nameB2"},
-					{"tableA.id": int32(6), "tableA.name": "Charlie", "tableA.other_b.tableB.name": "nameB2"},
+					{"id": int32(4), "name": "Alice", "other_b.tableB.name": "nameB1"},
+					{"id": int32(5), "name": "Bob", "other_b.tableB.name": "nameB2"},
+					{"id": int32(6), "name": "Charlie", "other_b.tableB.name": "nameB2"},
 				},
 				Limit: 5,
 				Total: 3,
@@ -291,19 +294,20 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Desc: "select columns from a and b with filter on tableA column",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableA.id",
-					"tableA.name",
-					"tableA.other_b.tableB.name",
+					"id",
+					"name",
+					"other_b.tableB.name",
 				},
+				From: "tableA",
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column:   "tableA.name",
+						Column:   "name",
 						Operator: "equal",
 						Value:    "Bob"}},
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableA.id": int32(5), "tableA.name": "Bob", "tableA.other_b.tableB.name": "nameB2"},
+					{"id": int32(5), "name": "Bob", "other_b.tableB.name": "nameB2"},
 				},
 				Limit: 5,
 				Total: 1,
@@ -313,19 +317,20 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Desc: "select columns from a and b with filter on tableB column",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableA.id",
-					"tableA.name",
-					"tableA.other_b.tableB.name",
+					"id",
+					"name",
+					"other_b.tableB.name",
 				},
+				From: "tableA",
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column:   "tableA.other_b.tableB.name",
+						Column:   "other_b.tableB.name",
 						Operator: "equal",
 						Value:    "nameB1"}},
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableA.id": int32(4), "tableA.name": "Alice", "tableA.other_b.tableB.name": "nameB1"},
+					{"id": int32(4), "name": "Alice", "other_b.tableB.name": "nameB1"},
 				},
 				Limit: 5,
 				Total: 1,
@@ -335,19 +340,20 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Desc: "select columns from a, b and c",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableA.id",
-					"tableA.other_b.tableB.id",
-					"tableA.other_b.tableB.other_c.tableC.name",
-					"tableA.other_b.tableB.other_c.tableC.description",
-					"tableA.other_b2.tableB.other_c.tableC.description",
+					"id",
+					"other_b.tableB.id",
+					"other_b.tableB.other_c.tableC.name",
+					"other_b.tableB.other_c.tableC.description",
+					"other_b2.tableB.other_c.tableC.description",
 				},
+				From:  "tableA",
 				Limit: 5,
 			},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableA.id": int32(4), "tableA.other_b.tableB.id": int32(1), "tableA.other_b.tableB.other_c.tableC.description": "Description 1", "tableA.other_b.tableB.other_c.tableC.name": "tableC1", "tableA.other_b2.tableB.other_c.tableC.description": "Description 2"},
-					{"tableA.id": int32(5), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2", "tableA.other_b2.tableB.other_c.tableC.description": nil},
-					{"tableA.id": int32(6), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2", "tableA.other_b2.tableB.other_c.tableC.description": nil},
+					{"id": int32(4), "other_b.tableB.id": int32(1), "other_b.tableB.other_c.tableC.description": "Description 1", "other_b.tableB.other_c.tableC.name": "tableC1", "other_b2.tableB.other_c.tableC.description": "Description 2"},
+					{"id": int32(5), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2", "other_b2.tableB.other_c.tableC.description": nil},
+					{"id": int32(6), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2", "other_b2.tableB.other_c.tableC.description": nil},
 				},
 				Limit: 5,
 				Total: 3,
@@ -357,20 +363,21 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Desc: "select columns from a, b and c with filter on b",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableA.id",
-					"tableA.other_b.tableB.id",
-					"tableA.other_b.tableB.other_c.tableC.name",
-					"tableA.other_b.tableB.other_c.tableC.description",
+					"id",
+					"other_b.tableB.id",
+					"other_b.tableB.other_c.tableC.name",
+					"other_b.tableB.other_c.tableC.description",
 				},
+				From: "tableA",
 				Where: &WhereExpression{
 					Or: []WhereExpression{
 						{Filter: &Filter{
-							Column:   "tableA.other_b.tableB.id",
+							Column:   "other_b.tableB.id",
 							Operator: "equal",
 							Value:    nil,
 						}},
 						{Filter: &Filter{
-							Column:   "tableA.other_b.tableB.id",
+							Column:   "other_b.tableB.id",
 							Operator: "notEqual",
 							Value:    1,
 						}},
@@ -379,8 +386,8 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableA.id": int32(5), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2"},
-					{"tableA.id": int32(6), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2"},
+					{"id": int32(5), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2"},
+					{"id": int32(6), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2"},
 				},
 				Limit: 5,
 				Total: 2,
@@ -390,14 +397,15 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Desc: "select columns from a, b and c with filter on c",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableA.id",
-					"tableA.other_b.tableB.id",
-					"tableA.other_b.tableB.other_c.tableC.name",
-					"tableA.other_b.tableB.other_c.tableC.description",
+					"id",
+					"other_b.tableB.id",
+					"other_b.tableB.other_c.tableC.name",
+					"other_b.tableB.other_c.tableC.description",
 				},
+				From: "tableA",
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column:   "tableA.other_b.tableB.other_c.tableC.description",
+						Column:   "other_b.tableB.other_c.tableC.description",
 						Operator: "contains",
 						Value:    " ",
 					},
@@ -406,9 +414,9 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableA.id": int32(4), "tableA.other_b.tableB.id": int32(1), "tableA.other_b.tableB.other_c.tableC.description": "Description 1", "tableA.other_b.tableB.other_c.tableC.name": "tableC1"},
-					{"tableA.id": int32(5), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2"},
-					{"tableA.id": int32(6), "tableA.other_b.tableB.id": int32(2), "tableA.other_b.tableB.other_c.tableC.description": "Description 2", "tableA.other_b.tableB.other_c.tableC.name": "tableC2"},
+					{"id": int32(4), "other_b.tableB.id": int32(1), "other_b.tableB.other_c.tableC.description": "Description 1", "other_b.tableB.other_c.tableC.name": "tableC1"},
+					{"id": int32(5), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2"},
+					{"id": int32(6), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2"},
 				},
 				Limit: 5,
 				Total: 3,
@@ -507,16 +515,17 @@ INSERT INTO "tableD" (id, name, status) VALUES
 			Desc: "Select all columns from tableD with enum",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableD.id",
-					"tableD.name",
-					"tableD.status",
+					"id",
+					"name",
+					"status",
 				},
+				From:  "tableD",
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableD.id": int32(1), "tableD.name": "Alice", "tableD.status": "active"},
-					{"tableD.id": int32(2), "tableD.name": "Bob", "tableD.status": "inactive"},
-					{"tableD.id": int32(3), "tableD.name": "Charlie", "tableD.status": "pending"},
+					{"id": int32(1), "name": "Alice", "status": "active"},
+					{"id": int32(2), "name": "Bob", "status": "inactive"},
+					{"id": int32(3), "name": "Charlie", "status": "pending"},
 				},
 				Limit: 5,
 				Total: 3,
@@ -526,13 +535,14 @@ INSERT INTO "tableD" (id, name, status) VALUES
 			Desc: "Filter by enum value",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableD.id",
-					"tableD.name",
-					"tableD.status",
+					"id",
+					"name",
+					"status",
 				},
+				From: "tableD",
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column:   "tableD.status",
+						Column:   "status",
 						Operator: "equal",
 						Value:    "active",
 					},
@@ -540,7 +550,7 @@ INSERT INTO "tableD" (id, name, status) VALUES
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableD.id": int32(1), "tableD.name": "Alice", "tableD.status": "active"},
+					{"id": int32(1), "name": "Alice", "status": "active"},
 				},
 				Limit: 5,
 				Total: 1,
@@ -550,19 +560,20 @@ INSERT INTO "tableD" (id, name, status) VALUES
 			Desc: "Multiple enum filters with OR",
 			Query: Query{
 				Select: []ColumnSelector{
-					"tableD.id",
-					"tableD.name",
-					"tableD.status",
+					"id",
+					"name",
+					"status",
 				},
+				From: "tableD",
 				Where: &WhereExpression{
 					Or: []WhereExpression{
 						{Filter: &Filter{
-							Column:   "tableD.status",
+							Column:   "status",
 							Operator: "equal",
 							Value:    "active",
 						}},
 						{Filter: &Filter{
-							Column:   "tableD.status",
+							Column:   "status",
 							Operator: "equal",
 							Value:    "pending",
 						}},
@@ -571,8 +582,8 @@ INSERT INTO "tableD" (id, name, status) VALUES
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"tableD.id": int32(1), "tableD.name": "Alice", "tableD.status": "active"},
-					{"tableD.id": int32(3), "tableD.name": "Charlie", "tableD.status": "pending"},
+					{"id": int32(1), "name": "Alice", "status": "active"},
+					{"id": int32(3), "name": "Charlie", "status": "pending"},
 				},
 				Limit: 5,
 				Total: 2,

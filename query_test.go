@@ -9,7 +9,7 @@ import (
 
 func TestColumnSelector(t *testing.T) {
 
-	cs := ColumnSelector("a.x.b.y.c.z")
+	cs := columnSelectorBase("a.x.b.y.c.z")
 	Convey("Given column selector "+cs.String(), t, func() {
 		Convey("except last column", func() {
 			prefix, c := cs.SplitAtLastColumn()
@@ -27,7 +27,7 @@ func TestColumnSelector(t *testing.T) {
 			})
 
 			Convey("reconstruct up to 2nd table", func() {
-				So(ColumnSelectorRebuild(tables[:2], cols[:2]), ShouldEqual, ColumnSelector("a.x.b.y"))
+				So(ColumnSelectorRebuild(tables[:2], cols[:2]), ShouldEqual, columnSelectorBase("a.x.b.y"))
 			})
 		})
 	})
@@ -71,10 +71,11 @@ func TestConvertQuery(t *testing.T) {
 			name: "simple select",
 			query: Query{
 				Select: []ColumnSelector{
-					"table1.id",
-					"table1.name",
-					"table1.age",
+					"id",
+					"name",
+					"age",
 				},
+				From:  "table1",
 				Limit: 10,
 			},
 			expectedQuery:      `SELECT "table1"."id", "table1"."name", "table1"."age" FROM "table1" LIMIT 10 OFFSET 0`,
@@ -84,13 +85,14 @@ func TestConvertQuery(t *testing.T) {
 			name: "select, where",
 			query: Query{
 				Select: []ColumnSelector{
-					"table1.id",
-					"table1.name",
-					"table1.age",
+					"id",
+					"name",
+					"age",
 				},
+				From: "table1",
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column:   "table1.name",
+						Column:   "name",
 						Operator: "equal",
 						Value:    "John Doe",
 					},
@@ -106,10 +108,11 @@ func TestConvertQuery(t *testing.T) {
 			name: "select, orderby",
 			query: Query{
 				Select: []ColumnSelector{
-					"table1.id",
-					"table1.name",
-					"table1.age",
+					"id",
+					"name",
+					"age",
 				},
+				From:    "table1",
 				OrderBy: []OrderByExpression{{ColumnSelector: "table1.name"}},
 				Limit:   10,
 			},
@@ -120,10 +123,11 @@ func TestConvertQuery(t *testing.T) {
 			name: "select, orderby desc",
 			query: Query{
 				Select: []ColumnSelector{
-					"table1.id",
-					"table1.name",
-					"table1.age",
+					"id",
+					"name",
+					"age",
 				},
+				From:    "table1",
 				OrderBy: []OrderByExpression{{ColumnSelector: "table1.name", IsDescending: true}},
 				Limit:   10,
 			},
@@ -134,10 +138,11 @@ func TestConvertQuery(t *testing.T) {
 			name: "select, orderby multiple",
 			query: Query{
 				Select: []ColumnSelector{
-					"table1.id",
-					"table1.name",
-					"table1.age",
+					"id",
+					"name",
+					"age",
 				},
+				From: "table1",
 				OrderBy: []OrderByExpression{
 					{ColumnSelector: "table1.name", IsDescending: true},
 					{ColumnSelector: "table1.age"}},
@@ -150,21 +155,22 @@ func TestConvertQuery(t *testing.T) {
 			name: "select, where with and conjunction",
 			query: Query{
 				Select: []ColumnSelector{
-					"table1.id",
-					"table1.name",
-					"table1.age",
+					"id",
+					"name",
+					"age",
 				},
+				From: "table1",
 				Where: &WhereExpression{
 					And: []WhereExpression{
 						{
 							Filter: &Filter{
-								Column:   ColumnSelector("table1.name"),
+								Column:   "name",
 								Operator: "equal",
 								Value:    "John Doe",
 							}},
 						{
 							Filter: &Filter{
-								Column:   ColumnSelector("table1.age"),
+								Column:   "age",
 								Operator: "greater",
 								Value:    30,
 							}},
@@ -180,9 +186,10 @@ func TestConvertQuery(t *testing.T) {
 			name: "select with foreign relation (not null)",
 			query: Query{
 				Select: []ColumnSelector{
-					"table1.id",
-					"table1.name",
-					"table1.other.table2.id"},
+					"id",
+					"name",
+					"other.table2.id"},
+				From:  "table1",
 				Limit: 5,
 			},
 			expectedQuery:      `SELECT "table1"."id", "table1"."name", "table1.other.table2"."id" FROM "table1" INNER JOIN "table2" AS "table1.other.table2" ON "table1"."other" = "table1.other.table2"."id" LIMIT 5 OFFSET 0`,
@@ -192,9 +199,10 @@ func TestConvertQuery(t *testing.T) {
 			name: "select with foreign relation (null)",
 			query: Query{
 				Select: []ColumnSelector{
-					"table1.id",
-					"table1.name",
-					"table1.other_null.table2.id"},
+					"id",
+					"name",
+					"other_null.table2.id"},
+				From:  "table1",
 				Limit: 5,
 			},
 			expectedQuery:      `SELECT "table1"."id", "table1"."name", "table1.other_null.table2"."id" FROM "table1" LEFT JOIN "table2" AS "table1.other_null.table2" ON "table1"."other_null" = "table1.other_null.table2"."id" LIMIT 5 OFFSET 0`,

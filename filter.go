@@ -74,11 +74,7 @@ func GetFilterOperations() []FilterOperator {
 	return keys
 }
 
-func (expr *WhereExpression) toSql() (sq.Sqlizer, set.Set[ColumnSelector], error) {
-	return expr.toSqlChild2()
-}
-
-func (expr WhereExpression) toSqlChild2() (sq.Sqlizer, set.Set[ColumnSelector], error) {
+func (expr *WhereExpression) toSql(baseTable Table) (sq.Sqlizer, set.Set[columnSelectorBase], error) {
 
 	if expr.Filter != nil {
 		f := *expr.Filter
@@ -86,9 +82,10 @@ func (expr WhereExpression) toSqlChild2() (sq.Sqlizer, set.Set[ColumnSelector], 
 		if !exists {
 			return nil, nil, fmt.Errorf("unsupported filter operation: %s", f.Operator)
 		}
-		cols := map[ColumnSelector]struct{}{expr.Filter.Column: {}}
+		cb := f.Column.WithBase(baseTable)
+		cols := set.NewValues(cb)
 
-		x, err := op(f.Column.StringQuoted(), f.Value)
+		x, err := op(cb.StringQuoted(), f.Value)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -97,32 +94,28 @@ func (expr WhereExpression) toSqlChild2() (sq.Sqlizer, set.Set[ColumnSelector], 
 
 	if len(expr.And) > 0 {
 		var conj sq.And
-		cols := set.New[ColumnSelector](len(expr.And))
+		cols := set.New[columnSelectorBase](len(expr.And))
 		for _, e := range expr.And {
-			p, cs, err := e.toSqlChild2()
+			p, cs, err := e.toSql(baseTable)
 			if err != nil {
 				return nil, nil, err
 			}
 			conj = append(conj, p)
-			for k := range cs {
-				cols[k] = struct{}{}
-			}
+			cols.AddSets(cs)
 		}
 		return conj, cols, nil
 	}
 
 	if len(expr.Or) > 0 {
 		var conj sq.Or
-		cols := set.New[ColumnSelector](len(expr.Or))
+		cols := set.New[columnSelectorBase](len(expr.Or))
 		for _, e := range expr.Or {
-			p, cs, err := e.toSqlChild2()
+			p, cs, err := e.toSql(baseTable)
 			if err != nil {
 				return nil, nil, err
 			}
 			conj = append(conj, p)
-			for k := range cs {
-				cols[k] = struct{}{}
-			}
+			cols.AddSets(cs)
 		}
 		return conj, cols, nil
 	}
@@ -149,7 +142,7 @@ func (f WhereExpression) validate(parent string) error {
 	active := 0
 	if f.Filter != nil {
 		if err := f.Filter.Validate(); err != nil {
-			return errors.Wrapf(err, "invalid where at %s", parent)
+			return err
 		}
 		active++
 	}
@@ -189,8 +182,8 @@ type Filter struct {
 }
 
 func (f Filter) Validate() error {
-	if f.Column == "" {
-		return fmt.Errorf("missing column")
+	if !f.Column.IsValid() {
+		return fmt.Errorf("invalid column '%s'", f.Column)
 	}
 	if f.Operator == "" {
 		return fmt.Errorf("missing operator")
