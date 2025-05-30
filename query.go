@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
-	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/bredtape/set"
@@ -15,9 +14,6 @@ import (
 
 var (
 	tableNameRegex = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]{1,63}$`)
-
-	// Regular expression for valid PostgreSQL column names
-	columnNameRegex = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]{1,63}$`)
 )
 
 type Table string
@@ -34,133 +30,9 @@ func (t Table) StringQuoted() string {
 	return fmt.Sprintf(`"%s"`, t)
 }
 
-type Column string
-
-func (c Column) String() string {
-	return string(c)
-}
-
-func (c Column) IsValid() bool {
-	return columnNameRegex.MatchString(string(c))
-}
-
-// column selector (without base table), which may consists of <column>.
-// When a (foreign) releation is used, the format is:
-//
-//	<column>.<foreign table>.<foreign column>
-//
-// but that may be nested.
-type ColumnSelector string
-
-func (cs ColumnSelector) String() string {
-	return string(cs)
-}
-
-func (cs ColumnSelector) IsValid() bool {
-	if cs.String() == "" {
-		return false
-	}
-	return cs.WithBase("base").IsValid()
-}
-
-func (cs ColumnSelector) WithBase(t Table) columnSelectorBase {
-	return columnSelectorBase(t.String() + "." + cs.String())
-}
-
-// column selector with base table, which may consists of <table>.<column>.
-// When a (foreign) releation is used, the format is:
-//
-//	<base table>.<column>.<foreign table>.<foreign column>
-//
-// but that may be nested.
-type columnSelectorBase string
-
-func (cs columnSelectorBase) String() string {
-	return string(cs)
-}
-
-func (cs columnSelectorBase) StringLower() string {
-	return strings.ToLower(string(cs))
-}
-
-// to string with quoted prefix and column
-func (cs columnSelectorBase) StringQuoted() string {
-	prefix, c := cs.SplitAtLastColumn()
-	return fmt.Sprintf(`"%s"."%s"`, prefix, c)
-}
-
-func (cs columnSelectorBase) IsValid() bool {
-	if cs.String() == "" {
-		return false
-	}
-	count := strings.Count(string(cs), ".")
-	if count%2 != 1 {
-		return false
-	}
-	tables, columns := cs.Breakdown()
-	for _, t := range tables {
-		if !t.IsValid() {
-			return false
-		}
-	}
-	for _, c := range columns {
-		if !c.IsValid() {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (cs columnSelectorBase) SplitAtLastColumn() (string, string) {
-	idx := strings.LastIndex(string(cs), ".")
-	return string(cs)[:idx], string(cs)[idx+1:]
-}
-
-func (cs columnSelectorBase) GetLastTable() Table {
-	ts, _ := cs.Breakdown()
-	return ts[len(ts)-1]
-}
-
-func (cs columnSelectorBase) ReplaceLastColumn(c Column) columnSelectorBase {
-	idx := strings.LastIndex(string(cs), ".")
-	return columnSelectorBase(string(cs)[:idx] + "." + c.String())
-}
-
-// get base table. Assumes that the column selector is valid
-func (c columnSelectorBase) GetBasetable() Table {
-	xs := strings.Split(string(c), ".")
-	return Table(xs[0])
-}
-
-// breakdown column selector into table and column, where the same
-// index are for the same table pair.
-// Assumes that the column selector is valid
-func (c columnSelectorBase) Breakdown() ([]Table, []Column) {
-	xs := strings.Split(string(c), ".")
-	tables := make([]Table, 0, len(xs)/2)
-	columns := make([]Column, 0, len(xs)/2)
-	for i := 0; i < len(xs); i += 2 {
-		tables = append(tables, Table(xs[i]))
-		columns = append(columns, Column(xs[i+1]))
-	}
-	return tables, columns
-}
-
-func ColumnSelectorRebuild(tables []Table, columns []Column) columnSelectorBase {
-	if len(tables) != len(columns) {
-		panic(fmt.Sprintf("invalid column selector: %v %v", tables, columns))
-	}
-	xs := make([]string, 0, len(tables)*2)
-	for i := range tables {
-		xs = append(xs, string(tables[i]), string(columns[i]))
-	}
-	return columnSelectorBase(strings.Join(xs, "."))
-}
-
 type OrderByExpression struct {
-	ColumnSelector columnSelectorBase `json:"column"`
-	IsDescending   bool               `json:"isDescending"`
+	ColumnSelector ColumnSelector `json:"column"`
+	IsDescending   bool           `json:"isDescending"`
 }
 
 type Query struct {
@@ -292,16 +164,16 @@ var (
 // convert query to SQL given the tables metadata.
 // Input args must be valid
 func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.SelectBuilder, qTotal sq.SelectBuilder, err error) {
-	columnsUsed := set.New[columnSelectorBase](len(query.Select))
-	cols := make([]string, 0, len(query.Select))
-	for _, c := range query.Select {
-		cb := c.WithBase(query.From)
-		if !cb.IsValid() {
-			return emptySelect, emptySelect, fmt.Errorf("invalid column selector: %s", c)
-		}
+	selectors, err := tables.ConvertColumnSelectors(query.From, query.Select...)
+	if err != nil {
+		return sq.SelectBuilder{}, sq.SelectBuilder{}, err
+	}
 
-		columnsUsed.Add(cb)
-		cols = append(cols, cb.StringQuoted())
+	columnsUsed := set.New[ColumnSelectorFull](len(query.Select))
+	cols := make([]string, 0, len(query.Select))
+	for _, c := range selectors {
+		columnsUsed.Add(c)
+		cols = append(cols, c.StringQuoted())
 	}
 
 	qPage = sq.
@@ -317,7 +189,7 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 		PlaceholderFormat(sq.Dollar)
 
 	if query.Where != nil {
-		qf, cs, err := query.Where.toSql(query.From)
+		qf, cs, err := query.Where.toSql(tables, query.From)
 		if err != nil {
 			return emptySelect, emptySelect, errors.Wrap(err, "invalid filter expression")
 		}
@@ -348,14 +220,19 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 	}
 
 	for _, c := range query.OrderBy {
-		if _, ok := columnsUsed[c.ColumnSelector]; !ok {
-			return emptySelect, emptySelect, fmt.Errorf("invalid order by column selector %s, not used in select", c.ColumnSelector.String())
+		cs, err := tables.ConvertColumnSelector(query.From, c.ColumnSelector)
+		if err != nil {
+			return qPage, qTotal, errors.Wrapf(err, "failed to convert column selector in orderby expression")
+		}
+
+		if _, ok := columnsUsed[cs]; !ok {
+			return emptySelect, emptySelect, fmt.Errorf("invalid order by column selector %s, not used in select", cs.String())
 		}
 
 		if c.IsDescending {
-			qPage = qPage.OrderBy(c.ColumnSelector.StringQuoted() + " DESC")
+			qPage = qPage.OrderBy(cs.StringQuoted() + " DESC")
 		} else {
-			qPage = qPage.OrderBy(c.ColumnSelector.StringQuoted())
+			qPage = qPage.OrderBy(cs.StringQuoted())
 		}
 	}
 
@@ -369,12 +246,12 @@ type TableColumn struct {
 
 type Join struct {
 	IsOuterJoin bool
-	From        columnSelectorBase
-	To          columnSelectorBase
+	From        ColumnSelectorFull
+	To          ColumnSelectorFull
 }
 
 // process foreign relations
-func processJoins(tables TablesMetadata, columnsUsed set.Set[columnSelectorBase]) ([]Join, error) {
+func processJoins(tables TablesMetadata, columnsUsed set.Set[ColumnSelectorFull]) ([]Join, error) {
 	result := make([]Join, 0, len(columnsUsed))
 
 	alreadyJoined := set.New[string](0)

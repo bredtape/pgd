@@ -9,7 +9,7 @@ import (
 
 func TestColumnSelector(t *testing.T) {
 
-	cs := columnSelectorBase("a.x.b.y.c.z")
+	cs := ColumnSelectorFull("a.x.b.y.c.z")
 	Convey("Given column selector "+cs.String(), t, func() {
 		Convey("except last column", func() {
 			prefix, c := cs.SplitAtLastColumn()
@@ -27,7 +27,7 @@ func TestColumnSelector(t *testing.T) {
 			})
 
 			Convey("reconstruct up to 2nd table", func() {
-				So(ColumnSelectorRebuild(tables[:2], cols[:2]), ShouldEqual, columnSelectorBase("a.x.b.y"))
+				So(ColumnSelectorRebuild(tables[:2], cols[:2]), ShouldEqual, ColumnSelectorFull("a.x.b.y"))
 			})
 		})
 	})
@@ -113,7 +113,7 @@ func TestConvertQuery(t *testing.T) {
 					"age",
 				},
 				From:    "table1",
-				OrderBy: []OrderByExpression{{ColumnSelector: "table1.name"}},
+				OrderBy: []OrderByExpression{{ColumnSelector: "name"}},
 				Limit:   10,
 			},
 			expectedQuery:      `SELECT "table1"."id", "table1"."name", "table1"."age" FROM "table1" ORDER BY "table1"."name" LIMIT 10 OFFSET 0`,
@@ -128,7 +128,7 @@ func TestConvertQuery(t *testing.T) {
 					"age",
 				},
 				From:    "table1",
-				OrderBy: []OrderByExpression{{ColumnSelector: "table1.name", IsDescending: true}},
+				OrderBy: []OrderByExpression{{ColumnSelector: "name", IsDescending: true}},
 				Limit:   10,
 			},
 			expectedQuery:      `SELECT "table1"."id", "table1"."name", "table1"."age" FROM "table1" ORDER BY "table1"."name" DESC LIMIT 10 OFFSET 0`,
@@ -144,8 +144,8 @@ func TestConvertQuery(t *testing.T) {
 				},
 				From: "table1",
 				OrderBy: []OrderByExpression{
-					{ColumnSelector: "table1.name", IsDescending: true},
-					{ColumnSelector: "table1.age"}},
+					{ColumnSelector: "name", IsDescending: true},
+					{ColumnSelector: "age"}},
 				Limit: 10,
 			},
 			expectedQuery:      `SELECT "table1"."id", "table1"."name", "table1"."age" FROM "table1" ORDER BY "table1"."name" DESC, "table1"."age" LIMIT 10 OFFSET 0`,
@@ -188,7 +188,7 @@ func TestConvertQuery(t *testing.T) {
 				Select: []ColumnSelector{
 					"id",
 					"name",
-					"other.table2.id"},
+					"other.id"},
 				From:  "table1",
 				Limit: 5,
 			},
@@ -201,7 +201,7 @@ func TestConvertQuery(t *testing.T) {
 				Select: []ColumnSelector{
 					"id",
 					"name",
-					"other_null.table2.id"},
+					"other_null.id"},
 				From:  "table1",
 				Limit: 5,
 			},

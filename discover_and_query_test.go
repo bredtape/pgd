@@ -276,15 +276,15 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 				Select: []ColumnSelector{
 					"id",
 					"name",
-					"other_b.tableB.name",
+					"other_b.name",
 				},
 				From:  "tableA",
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"id": int32(4), "name": "Alice", "other_b.tableB.name": "nameB1"},
-					{"id": int32(5), "name": "Bob", "other_b.tableB.name": "nameB2"},
-					{"id": int32(6), "name": "Charlie", "other_b.tableB.name": "nameB2"},
+					{"id": int32(4), "name": "Alice", "other_b.name": "nameB1"},
+					{"id": int32(5), "name": "Bob", "other_b.name": "nameB2"},
+					{"id": int32(6), "name": "Charlie", "other_b.name": "nameB2"},
 				},
 				Limit: 5,
 				Total: 3,
@@ -296,7 +296,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 				Select: []ColumnSelector{
 					"id",
 					"name",
-					"other_b.tableB.name",
+					"other_b.name",
 				},
 				From: "tableA",
 				Where: &WhereExpression{
@@ -307,7 +307,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"id": int32(5), "name": "Bob", "other_b.tableB.name": "nameB2"},
+					{"id": int32(5), "name": "Bob", "other_b.name": "nameB2"},
 				},
 				Limit: 5,
 				Total: 1,
@@ -319,18 +319,18 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 				Select: []ColumnSelector{
 					"id",
 					"name",
-					"other_b.tableB.name",
+					"other_b.name",
 				},
 				From: "tableA",
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column:   "other_b.tableB.name",
+						Column:   "other_b.name",
 						Operator: "equal",
 						Value:    "nameB1"}},
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"id": int32(4), "name": "Alice", "other_b.tableB.name": "nameB1"},
+					{"id": int32(4), "name": "Alice", "other_b.name": "nameB1"},
 				},
 				Limit: 5,
 				Total: 1,
@@ -341,19 +341,19 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Query: Query{
 				Select: []ColumnSelector{
 					"id",
-					"other_b.tableB.id",
-					"other_b.tableB.other_c.tableC.name",
-					"other_b.tableB.other_c.tableC.description",
-					"other_b2.tableB.other_c.tableC.description",
+					"other_b.id",
+					"other_b.other_c.name",
+					"other_b.other_c.description",
+					"other_b2.other_c.description",
 				},
 				From:  "tableA",
 				Limit: 5,
 			},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"id": int32(4), "other_b.tableB.id": int32(1), "other_b.tableB.other_c.tableC.description": "Description 1", "other_b.tableB.other_c.tableC.name": "tableC1", "other_b2.tableB.other_c.tableC.description": "Description 2"},
-					{"id": int32(5), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2", "other_b2.tableB.other_c.tableC.description": nil},
-					{"id": int32(6), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2", "other_b2.tableB.other_c.tableC.description": nil},
+					{"id": int32(4), "other_b.id": int32(1), "other_b.other_c.description": "Description 1", "other_b.other_c.name": "tableC1", "other_b2.other_c.description": "Description 2"},
+					{"id": int32(5), "other_b.id": int32(2), "other_b.other_c.description": "Description 2", "other_b.other_c.name": "tableC2", "other_b2.other_c.description": nil},
+					{"id": int32(6), "other_b.id": int32(2), "other_b.other_c.description": "Description 2", "other_b.other_c.name": "tableC2", "other_b2.other_c.description": nil},
 				},
 				Limit: 5,
 				Total: 3,
@@ -364,20 +364,20 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Query: Query{
 				Select: []ColumnSelector{
 					"id",
-					"other_b.tableB.id",
-					"other_b.tableB.other_c.tableC.name",
-					"other_b.tableB.other_c.tableC.description",
+					"other_b.id",
+					"other_b.other_c.name",
+					"other_b.other_c.description",
 				},
 				From: "tableA",
 				Where: &WhereExpression{
 					Or: []WhereExpression{
 						{Filter: &Filter{
-							Column:   "other_b.tableB.id",
+							Column:   "other_b.id",
 							Operator: "equal",
 							Value:    nil,
 						}},
 						{Filter: &Filter{
-							Column:   "other_b.tableB.id",
+							Column:   "other_b.id",
 							Operator: "notEqual",
 							Value:    1,
 						}},
@@ -386,8 +386,8 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"id": int32(5), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2"},
-					{"id": int32(6), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2"},
+					{"id": int32(5), "other_b.id": int32(2), "other_b.other_c.description": "Description 2", "other_b.other_c.name": "tableC2"},
+					{"id": int32(6), "other_b.id": int32(2), "other_b.other_c.description": "Description 2", "other_b.other_c.name": "tableC2"},
 				},
 				Limit: 5,
 				Total: 2,
@@ -398,14 +398,14 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			Query: Query{
 				Select: []ColumnSelector{
 					"id",
-					"other_b.tableB.id",
-					"other_b.tableB.other_c.tableC.name",
-					"other_b.tableB.other_c.tableC.description",
+					"other_b.id",
+					"other_b.other_c.name",
+					"other_b.other_c.description",
 				},
 				From: "tableA",
 				Where: &WhereExpression{
 					Filter: &Filter{
-						Column:   "other_b.tableB.other_c.tableC.description",
+						Column:   "other_b.other_c.description",
 						Operator: "contains",
 						Value:    " ",
 					},
@@ -414,9 +414,9 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 			},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"id": int32(4), "other_b.tableB.id": int32(1), "other_b.tableB.other_c.tableC.description": "Description 1", "other_b.tableB.other_c.tableC.name": "tableC1"},
-					{"id": int32(5), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2"},
-					{"id": int32(6), "other_b.tableB.id": int32(2), "other_b.tableB.other_c.tableC.description": "Description 2", "other_b.tableB.other_c.tableC.name": "tableC2"},
+					{"id": int32(4), "other_b.id": int32(1), "other_b.other_c.description": "Description 1", "other_b.other_c.name": "tableC1"},
+					{"id": int32(5), "other_b.id": int32(2), "other_b.other_c.description": "Description 2", "other_b.other_c.name": "tableC2"},
+					{"id": int32(6), "other_b.id": int32(2), "other_b.other_c.description": "Description 2", "other_b.other_c.name": "tableC2"},
 				},
 				Limit: 5,
 				Total: 3,

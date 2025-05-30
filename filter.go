@@ -74,7 +74,7 @@ func GetFilterOperations() []FilterOperator {
 	return keys
 }
 
-func (expr *WhereExpression) toSql(baseTable Table) (sq.Sqlizer, set.Set[columnSelectorBase], error) {
+func (expr *WhereExpression) toSql(tables TablesMetadata, baseTable Table) (sq.Sqlizer, set.Set[ColumnSelectorFull], error) {
 
 	if expr.Filter != nil {
 		f := *expr.Filter
@@ -82,7 +82,11 @@ func (expr *WhereExpression) toSql(baseTable Table) (sq.Sqlizer, set.Set[columnS
 		if !exists {
 			return nil, nil, fmt.Errorf("unsupported filter operation: %s", f.Operator)
 		}
-		cb := f.Column.WithBase(baseTable)
+		cbs, err := tables.ConvertColumnSelectors(baseTable, f.Column)
+		if err != nil {
+			return nil, nil, err
+		}
+		cb := cbs[0]
 		cols := set.NewValues(cb)
 
 		x, err := op(cb.StringQuoted(), f.Value)
@@ -94,9 +98,9 @@ func (expr *WhereExpression) toSql(baseTable Table) (sq.Sqlizer, set.Set[columnS
 
 	if len(expr.And) > 0 {
 		var conj sq.And
-		cols := set.New[columnSelectorBase](len(expr.And))
+		cols := set.New[ColumnSelectorFull](len(expr.And))
 		for _, e := range expr.And {
-			p, cs, err := e.toSql(baseTable)
+			p, cs, err := e.toSql(tables, baseTable)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -108,9 +112,9 @@ func (expr *WhereExpression) toSql(baseTable Table) (sq.Sqlizer, set.Set[columnS
 
 	if len(expr.Or) > 0 {
 		var conj sq.Or
-		cols := set.New[columnSelectorBase](len(expr.Or))
+		cols := set.New[ColumnSelectorFull](len(expr.Or))
 		for _, e := range expr.Or {
-			p, cs, err := e.toSql(baseTable)
+			p, cs, err := e.toSql(tables, baseTable)
 			if err != nil {
 				return nil, nil, err
 			}

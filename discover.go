@@ -100,6 +100,56 @@ func (ts TablesMetadata) Validate() error {
 	return nil
 }
 
+func (ts TablesMetadata) ConvertColumnSelectors(baseTable Table, css ...ColumnSelector) ([]ColumnSelectorFull, error) {
+	result := make([]ColumnSelectorFull, 0, len(css))
+	for _, c := range css {
+		x, err := ts.ConvertColumnSelector(baseTable, c)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to convert column selector '%s'", c)
+		}
+		result = append(result, x)
+	}
+	return result, nil
+}
+
+// convert from column selector, e.g. "col1.col2.col3" to 'full' format with table information, e.g. "baseTable.col1.tableB.col2.tableC.col3"
+func (ts TablesMetadata) ConvertColumnSelector(baseTable Table, cs ColumnSelector) (ColumnSelectorFull, error) {
+	columns := cs.GetColumns()
+	if len(columns) == 0 {
+		return "", errors.New("invalid columns")
+	}
+
+	tables := []Table{baseTable} // extended on every iteration in the loop
+	for i := range len(columns) {
+		table := tables[i]
+		t, exists := ts[table]
+		if !exists {
+			return "", fmt.Errorf("table %s not found in table metadata when building column selector for %s", table, cs)
+		}
+
+		column := columns[i]
+		tc, exists := t.Columns[column]
+		if !exists {
+			return "", fmt.Errorf("table '%s' does not have column '%s'", table, column)
+		}
+
+		// not at the end, so there must be a relation
+		if i < len(columns)-1 {
+			if tc.Relation == nil {
+				return "", fmt.Errorf("table %s, column %s should have some relation, but does not", table, column)
+			}
+			r := *tc.Relation
+			tables = append(tables, r.Table)
+		}
+	}
+
+	if len(tables) != len(columns) {
+		return "", fmt.Errorf("internal error, there should be as many tables %v as there are columns %v", tables, columns)
+	}
+
+	return ColumnSelectorRebuild(tables, columns), nil
+}
+
 type TableBehavior struct {
 	Description string
 }
