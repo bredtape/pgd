@@ -239,20 +239,15 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 	return qPage, qTotal, nil
 }
 
-type TableColumn struct {
-	Table  Table
-	Column Column
-}
-
-type Join struct {
+type tableJoin struct {
 	IsOuterJoin bool
 	From        ColumnSelectorFull
 	To          ColumnSelectorFull
 }
 
 // process foreign relations
-func processJoins(tables TablesMetadata, columnsUsed set.Set[ColumnSelectorFull]) ([]Join, error) {
-	result := make([]Join, 0, len(columnsUsed))
+func processJoins(tables TablesMetadata, columnsUsed set.Set[ColumnSelectorFull]) ([]tableJoin, error) {
+	result := make([]tableJoin, 0, len(columnsUsed))
 
 	alreadyJoined := set.New[string](0)
 	for c := range columnsUsed {
@@ -290,7 +285,7 @@ func processJoins(tables TablesMetadata, columnsUsed set.Set[ColumnSelectorFull]
 				return nil, fmt.Errorf("invalid foreign column '%s', foreign table '%s' does not match '%s'", sourceCol.Name, sourceCol.Relation.Table, targetTable.Name)
 			}
 
-			result = append(result, Join{
+			result = append(result, tableJoin{
 				IsOuterJoin: sourceCol.IsNullable,
 				From:        source,
 				To:          target.ReplaceLastColumn(sourceCol.Relation.Column)})
