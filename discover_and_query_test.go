@@ -40,7 +40,8 @@ CREATE TABLE "tableA" (
   name TEXT NOT NULL,
   age DOUBLE PRECISION,
   other_b INTEGER REFERENCES "tableB"(id) NOT NULL,
-	other_b2 INTEGER REFERENCES "tableB"(id)
+  other_b2 INTEGER REFERENCES "tableB"(id),
+  xs TEXT[]
 );
 
 INSERT INTO "tableC" (name, description) VALUES
@@ -53,10 +54,10 @@ INSERT INTO "tableB" (id, name, other_c) VALUES
   (2, 'nameB2', 'tableC2'),
   (3, 'nameB3', NULL);
 
-INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
-  (4, 'Alice', 30, 1, 2),
-  (5, 'Bob', 25, 2, NULL),
-  (6, 'Charlie', 35, 2, 3);
+INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
+  (4, 'Alice', 30, 1, 2, '{"xx", "yy"}'),
+  (5, 'Bob', 25, 2, NULL, '{"xx"}'),
+  (6, 'Charlie', 35, 2, 3, NULL);
 `
 	c := Config{
 		FilterOperations: DefaultFilterOperations,
@@ -75,7 +76,13 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 				AllowSorting:     false,
 				AllowFiltering:   false,
 				FilterOperations: []FilterOperator{"equal"},
-			}},
+			},
+			DataType("text[]"): {
+				AllowSorting:     true,
+				AllowFiltering:   true,
+				FilterOperations: []FilterOperator{"any"},
+			},
+		},
 		ColumnUnknownDefault: ColumnBehavior{
 			AllowSorting:     false,
 			AllowFiltering:   false,
@@ -153,6 +160,16 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 						AllowSorting:     true,
 						AllowFiltering:   false,
 						FilterOperations: filterInt,
+					},
+				},
+				"xs": {
+					Name:       "xs",
+					DataType:   "text[]",
+					IsNullable: true,
+					Behavior: ColumnBehavior{
+						AllowSorting:     true,
+						AllowFiltering:   true,
+						FilterOperations: []FilterOperator{"any"},
 					},
 				},
 			},
@@ -422,6 +439,25 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
 				Limit: 5,
 				Total: 3,
 			},
+		},
+		{
+			Desc: "filter column 'xs' in tableA",
+			Query: Query{
+				Select: []ColumnSelector{"id", "xs"},
+				From:   "tableA",
+				Where: &WhereExpression{
+					Filter: &Filter{
+						Column:   "xs",
+						Operator: "any",
+						Value:    "xx"},
+				},
+				Limit: 5,
+			},
+			Expected: QueryResult{
+				Data: []map[string]any{
+					{"id": int32(4), "xs": []any{"xx", "yy"}},
+					{"id": int32(5), "xs": []any{"xx"}}},
+				Limit: 5, Total: 2},
 		},
 	}
 

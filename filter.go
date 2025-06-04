@@ -2,7 +2,7 @@ package pgd
 
 import (
 	"fmt"
-	"slices"
+	"reflect"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/bredtape/set"
@@ -15,7 +15,18 @@ type FilterOperations map[FilterOperator](func(string, any) (sq.Sqlizer, error))
 
 var (
 	// supported 'where' operations from name to func(column, value) -> (sq.Sqlizer, error)
-	filterOperations = map[FilterOperator](func(string, any) (sq.Sqlizer, error)){
+	DefaultFilterOperations = FilterOperations{
+		"any": func(s string, v any) (sq.Sqlizer, error) {
+			if v == nil {
+				return nil, errors.New("argument is nil")
+			}
+			t := reflect.TypeOf(v)
+			isSlice := t.Kind() == reflect.Slice
+			if isSlice {
+				return nil, fmt.Errorf("argument '%v' must not be a list", v)
+			}
+			return sq.Expr(fmt.Sprintf("? = ANY (%s)", s), v), nil
+		},
 		"contains": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
 			if !ok {
