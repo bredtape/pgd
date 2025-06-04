@@ -59,6 +59,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2) VALUES
   (6, 'Charlie', 35, 2, 3);
 `
 	c := Config{
+		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
 			DataType("integer"): {
 				AllowSorting:     true,
@@ -592,6 +593,7 @@ INSERT INTO "tableD" (id, name, status) VALUES
 	}
 
 	c := Config{
+		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
 			DataType("integer"): {
 				AllowSorting:     true,
@@ -649,7 +651,7 @@ func runTests(ctx context.Context, t *testing.T, c Config, schema string, baseTa
 					//result, _, err := api.Query(ctx, db, tables, tc.Query)
 					result, debug, err := api.Query(ctx, db, tables, tc.Query)
 					if debug.PageSQL != "" {
-						Printf("debug page sql: '%s'\ntotal sql: '%s'\n", debug.PageSQL, debug.TotalSQL)
+						Printf("debug page sql: '%s'\nargs: '%v', total sql: '%s'\n", debug.PageSQL, debug.PageArgs, debug.TotalSQL)
 					}
 					So(err, ShouldBeNil)
 

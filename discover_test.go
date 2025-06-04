@@ -18,6 +18,7 @@ func TestDiscoverSimpleTable1(t *testing.T) {
 	ctx := context.Background()
 
 	c := Config{
+		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
 			DataType("integer"): {
 				AllowSorting:     true,
@@ -133,6 +134,7 @@ func TestDiscoverTableWithRelation(t *testing.T) {
 	defaultFilterOperations := []FilterOperator{"equal", "notEqual"}
 
 	c := Config{
+		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
 			DataType("integer"): {
 				AllowSorting:     true,
@@ -141,8 +143,7 @@ func TestDiscoverTableWithRelation(t *testing.T) {
 			DataType("text"): {
 				AllowSorting:     false,
 				AllowFiltering:   true,
-				FilterOperations: defaultFilterOperations},
-		}}
+				FilterOperations: defaultFilterOperations}}}
 
 	api, err := NewAPI(c)
 	if err != nil {

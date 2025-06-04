@@ -210,7 +210,7 @@ func TestConvertQuery(t *testing.T) {
 		},
 	}
 
-	api, err := NewAPI(Config{})
+	api, err := NewAPI(Config{FilterOperations: DefaultFilterOperations})
 	if err != nil {
 		t.Fatalf("Failed to create API: %v", err)
 	}

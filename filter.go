@@ -11,6 +11,8 @@ import (
 
 type FilterOperator string
 
+type FilterOperations map[FilterOperator](func(string, any) (sq.Sqlizer, error))
+
 var (
 	// supported 'where' operations from name to func(column, value) -> (sq.Sqlizer, error)
 	filterOperations = map[FilterOperator](func(string, any) (sq.Sqlizer, error)){
@@ -65,20 +67,11 @@ var (
 	}
 )
 
-func GetFilterOperations() []FilterOperator {
-	keys := make([]FilterOperator, 0, len(filterOperations))
-	for k := range filterOperations {
-		keys = append(keys, k)
-	}
-	slices.Sort(keys)
-	return keys
-}
-
 func (expr *WhereExpression) toSql(tables TablesMetadata, baseTable Table) (sq.Sqlizer, set.Set[ColumnSelectorFull], error) {
 
 	if expr.Filter != nil {
 		f := *expr.Filter
-		op, exists := filterOperations[f.Operator]
+		op, exists := DefaultFilterOperations[f.Operator]
 		if !exists {
 			return nil, nil, fmt.Errorf("unsupported filter operation: %s", f.Operator)
 		}
