@@ -37,11 +37,11 @@ func NewAPI(c Config) (*API, error) {
 
 // table metadata
 type TableMetadata struct {
-	Name Table
+	Name Table `json:"name"`
 
 	// columns by name
-	Columns  map[Column]ColumnMetadata
-	Behavior TableBehavior
+	Columns  map[Column]ColumnMetadata `json:"columns"`
+	Behavior TableBehavior             `json:"behavior"`
 }
 
 func (t TableMetadata) Validate() error {
