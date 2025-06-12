@@ -151,7 +151,7 @@ func (ts TablesMetadata) ConvertColumnSelector(baseTable Table, cs ColumnSelecto
 }
 
 type TableBehavior struct {
-	Description string
+	Properties map[string]string `json:"properties"`
 }
 
 type ColumnMetadata struct {
@@ -317,7 +317,12 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 		return nil, errors.Wrap(err, "failed to scan table info")
 	}
 	if comment != nil {
-		tableInfo.Behavior.Description = *comment
+		var behavior TableBehavior
+		err = json.Unmarshal([]byte(*comment), &behavior)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to unmarshal table %s comment as TableBehavior", table)
+		}
+		tableInfo.Behavior = behavior
 	}
 
 	// Process column details results

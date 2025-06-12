@@ -173,7 +173,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 					},
 				},
 			},
-			Behavior: TableBehavior{Description: ""},
+			Behavior: TableBehavior{},
 		},
 		"tableB": TableMetadata{
 			Name: "tableB",
@@ -213,7 +213,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 					},
 				},
 			},
-			Behavior: TableBehavior{Description: ""},
+			Behavior: TableBehavior{},
 		},
 		"tableC": TableMetadata{
 			Name: "tableC",
@@ -239,7 +239,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 					},
 				},
 			},
-			Behavior: TableBehavior{Description: ""},
+			Behavior: TableBehavior{},
 		},
 	}
 	tcs := []testCase{
@@ -543,7 +543,7 @@ INSERT INTO "tableD" (id, name, status) VALUES
 					},
 				},
 			},
-			Behavior: TableBehavior{Description: ""},
+			Behavior: TableBehavior{},
 		},
 	}
 

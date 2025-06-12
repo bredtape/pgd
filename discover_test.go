@@ -61,14 +61,16 @@ CREATE TABLE table1 (
   description TEXT
 );
 
+COMMENT ON TABLE table1 IS E'{"properties": {"kk": "vv"}}';
 COMMENT ON COLUMN table1.id IS E'{"properties": {"key1": "value1", "key2": "value2"}}';
 COMMENT ON COLUMN table1.name IS E'{"properties": {"key3": "value3"},"filterOperations": ["contains", "notContains"]}';
 COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "description": "age desc", "allowSorting": true, "allowFiltering": true, "filterOperations": ["equal", "notEqual"]}';
-
 `
 
 	expected := TableMetadata{
 		Name: "table1",
+		Behavior: TableBehavior{
+			Properties: map[string]string{"kk": "vv"}},
 		Columns: map[Column]ColumnMetadata{
 			"id": {
 				Name:       "id",
