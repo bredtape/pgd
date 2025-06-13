@@ -675,17 +675,17 @@ func runTests(ctx context.Context, t *testing.T, c Config, schema string, baseTa
 		So(err, ShouldBeNil)
 
 		Convey("Discover from base", func() {
-			tables, err := api.Discover(ctx, db, baseTable)
+			result, err := api.Discover(ctx, db, baseTable)
 			So(err, ShouldBeNil)
 
 			Convey("should have table metadata", func() {
-				So(tables, ShouldResemble, expectedTables)
+				So(result.TablesMetadata, ShouldResemble, expectedTables)
 			})
 
 			for idx, tc := range tcs {
 				Convey(fmt.Sprintf("index %d, %s", idx, tc.Desc), func() {
 					//result, _, err := api.Query(ctx, db, tables, tc.Query)
-					result, debug, err := api.Query(ctx, db, tables.TablesMetadata, tc.Query)
+					result, debug, err := api.Query(ctx, db, result.TablesMetadata, tc.Query)
 					if debug.PageSQL != "" {
 						Printf("debug page sql: '%s'\nargs: '%v', total sql: '%s'\n", debug.PageSQL, debug.PageArgs, debug.TotalSQL)
 					}

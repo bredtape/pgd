@@ -123,7 +123,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 			So(err, ShouldBeNil)
 
 			Convey("should have table metadata", func() {
-				So(result, ShouldHaveLength, 1)
+				So(result.TablesMetadata, ShouldHaveLength, 1)
 				So(result.TablesMetadata["table1"], ShouldResemble, expected)
 			})
 		})
@@ -238,14 +238,18 @@ CREATE TABLE table2 (
 			result, err := api.Discover(ctx, db, "table2")
 			So(err, ShouldBeNil)
 
+			Convey("base table should match", func() {
+				So(result.BaseTable, ShouldEqual, Table("table2"))
+			})
+
 			Convey("expected result should also be valid", func() {
 				err := expected.Validate()
 				So(err, ShouldBeNil)
 			})
 
 			Convey("should have table metadata", func() {
-				So(result, ShouldHaveLength, 2)
-				So(result, ShouldResemble, expected)
+				So(result.TablesMetadata, ShouldHaveLength, 2)
+				So(result.TablesMetadata, ShouldResemble, expected)
 			})
 		})
 	})
