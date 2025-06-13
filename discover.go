@@ -36,9 +36,9 @@ func NewAPI(c Config) (*API, error) {
 }
 
 type DiscoverResult struct {
-	BaseTable       Table
-	TablesMetadata  TablesMetadata                    // metadata pr table
-	ColumnsMetadata map[ColumnSelector]ColumnMetadata // map of all columns. Same content as TablesMetadata, but flattened
+	BaseTable       Table                             `json:"baseTable"`
+	TablesMetadata  TablesMetadata                    `json:"tablesMetadata"`  // metadata pr table
+	ColumnsMetadata map[ColumnSelector]ColumnMetadata `json:"columnsMetadata"` // map of all columns. Same content as TablesMetadata, but flattened
 }
 
 // discover base table and all related tables
