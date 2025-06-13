@@ -685,7 +685,7 @@ func runTests(ctx context.Context, t *testing.T, c Config, schema string, baseTa
 			for idx, tc := range tcs {
 				Convey(fmt.Sprintf("index %d, %s", idx, tc.Desc), func() {
 					//result, _, err := api.Query(ctx, db, tables, tc.Query)
-					result, debug, err := api.Query(ctx, db, tables, tc.Query)
+					result, debug, err := api.Query(ctx, db, tables.TablesMetadata, tc.Query)
 					if debug.PageSQL != "" {
 						Printf("debug page sql: '%s'\nargs: '%v', total sql: '%s'\n", debug.PageSQL, debug.PageArgs, debug.TotalSQL)
 					}

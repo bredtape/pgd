@@ -124,7 +124,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 
 			Convey("should have table metadata", func() {
 				So(result, ShouldHaveLength, 1)
-				So(result["table1"], ShouldResemble, expected)
+				So(result.TablesMetadata["table1"], ShouldResemble, expected)
 			})
 		})
 	})

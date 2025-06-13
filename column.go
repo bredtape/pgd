@@ -52,6 +52,14 @@ func (cs ColumnSelector) GetColumns() []Column {
 	return result
 }
 
+func NewColumnSelector(cs ...Column) ColumnSelector {
+	xs := make([]string, 0, len(cs))
+	for _, c := range cs {
+		xs = append(xs, c.String())
+	}
+	return ColumnSelector(strings.Join(xs, "."))
+}
+
 // column selector with table information.
 // The format is<table>.<column> and may be nested with foreign tables.
 //
@@ -141,4 +149,40 @@ func ColumnSelectorRebuild(tables []Table, columns []Column) ColumnSelectorFull 
 		xs = append(xs, string(tables[i]), string(columns[i]))
 	}
 	return ColumnSelectorFull(strings.Join(xs, "."))
+}
+
+type ColumnMetadata struct {
+	Name       Column          `json:"name"`
+	DataType   DataType        `json:"dataType"`
+	IsNullable bool            `json:"isNullable"`
+	Relation   *ColumnRelation `json:"relation,omitempty"`
+	Behavior   ColumnBehavior  `json:"behavior"`
+}
+
+func (c ColumnMetadata) Validate() error {
+	if c.Name == "" {
+		return fmt.Errorf("missing column name")
+	}
+	if !c.Name.IsValid() {
+		return fmt.Errorf("invalid column name")
+	}
+	if c.DataType == "" {
+		return fmt.Errorf("missing column data type")
+	}
+	return nil
+}
+
+type ColumnRelation struct {
+	Table  Table  `json:"table"`  // foreign table name
+	Column Column `json:"column"` // foreign column name
+}
+
+type ColumnBehavior struct {
+	Properties     map[string]string `json:"properties"`
+	AllowSorting   bool              `json:"allowSorting"`
+	AllowFiltering bool              `json:"allowFiltering"`
+	// whether to disable, enable or use default option for filter operations
+	OmitDefaultFilterOperations bool `json:"omitDefaultFilterOperations"`
+	// set of allowed filter operations, in addition to the default ones
+	FilterOperations []FilterOperator `json:"filterOperations"`
 }
