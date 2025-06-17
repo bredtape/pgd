@@ -210,7 +210,7 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 		toPrefix, _ := j.To.SplitAtLastColumn()
 		joinExpr := fmt.Sprintf(`"%s" AS "%s" ON %s = %s`,
 			j.To.GetLastTable(), toPrefix, j.From.StringQuoted(), j.To.StringQuoted())
-		if j.IsOuterJoin {
+		if j.UseLeftJoin {
 			qPage = qPage.LeftJoin(joinExpr)
 			qTotal = qTotal.LeftJoin(joinExpr)
 		} else {
@@ -240,7 +240,7 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 }
 
 type tableJoin struct {
-	IsOuterJoin bool
+	UseLeftJoin bool
 	From        ColumnSelectorFull
 	To          ColumnSelectorFull
 }
@@ -257,6 +257,7 @@ func processJoins(tables TablesMetadata, columnsUsed set.Set[ColumnSelectorFull]
 			continue
 		}
 
+		parentNull := false
 		for i := range len(ts) - 1 {
 			source := ColumnSelectorRebuild(ts[:i+1], cols[:i+1])
 			target := ColumnSelectorRebuild(ts[:i+2], cols[:i+2])
@@ -278,6 +279,7 @@ func processJoins(tables TablesMetadata, columnsUsed set.Set[ColumnSelectorFull]
 			if !exists {
 				return nil, fmt.Errorf("invalid foreign table '%s'", ts[i+1])
 			}
+
 			if sourceCol.Relation == nil {
 				return nil, fmt.Errorf("invalid foreign column '%s', no relation", sourceCol.Name)
 			}
@@ -285,8 +287,11 @@ func processJoins(tables TablesMetadata, columnsUsed set.Set[ColumnSelectorFull]
 				return nil, fmt.Errorf("invalid foreign column '%s', foreign table '%s' does not match '%s'", sourceCol.Name, sourceCol.Relation.Table, targetTable.Name)
 			}
 
+			// if this or any previous relation is optional (NULL), we must use LEFT JOIN for all descendants
+			parentNull = parentNull || sourceCol.IsNullable
+
 			result = append(result, tableJoin{
-				IsOuterJoin: sourceCol.IsNullable,
+				UseLeftJoin: parentNull,
 				From:        source,
 				To:          target.ReplaceLastColumn(sourceCol.Relation.Column)})
 		}

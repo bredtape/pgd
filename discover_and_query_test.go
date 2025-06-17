@@ -239,6 +239,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 			Behavior: TableBehavior{},
 		},
 	}
+
 	tcs := []testCase{
 		{
 			Desc: "Select all columns from tableA",
@@ -757,6 +758,133 @@ INSERT INTO "tableD" (id, name, status) VALUES
 	}
 
 	runTests(t, c, schema, "tableD", expectedTables, tcs)
+}
+
+// with tableA having optional relation with tableB, but tableB have required relation with tableC, then
+// LEFT JOINs must be used all the way (or otherwise group the INNER JOINs inside the LEFT JOIN)
+func TestDiscoverAndQueryWithOptionalReferenceHavingRequiredChild(t *testing.T) {
+	schema := `
+DROP TABLE IF EXISTS "tableA";
+DROP TABLE IF EXISTS "tableB";
+DROP TABLE IF EXISTS "tableC";
+
+CREATE TABLE "tableC" (
+  name TEXT NOT NULL PRIMARY KEY,
+  description TEXT
+);
+
+CREATE TABLE "tableB" (
+  id INTEGER PRIMARY KEY,
+  other_c TEXT REFERENCES "tableC"(name) NOT NULL
+);
+
+CREATE TABLE "tableA" (
+  id INTEGER PRIMARY KEY,
+  other_b INTEGER REFERENCES "tableB"(id)
+);
+
+INSERT INTO "tableC" (name, description) VALUES
+  ('tableC1', 'Description 1'),
+  ('tableC2', 'Description 2'),
+  ('tableC3', 'Description 3');
+
+INSERT INTO "tableB" (id, other_c) VALUES
+  (1, 'tableC1'),
+  (2, 'tableC2'),
+  (3, 'tableC3');
+
+INSERT INTO "tableA" (id, other_b) VALUES
+  (4, 1),
+  (5, 2),
+  (6, NULL);
+	`
+
+	c := Config{
+		FilterOperations: DefaultFilterOperations,
+		ColumnUnknownDefault: ColumnBehavior{
+			AllowSorting:     false,
+			AllowFiltering:   false,
+			FilterOperations: nil,
+		}}
+
+	expectedTables := TablesMetadata{
+		"tableA": TableMetadata{
+			Name: "tableA",
+			Columns: map[Column]ColumnMetadata{
+				"id": {
+					Name:     "id",
+					DataType: "integer",
+				},
+				"other_b": {
+					Name:       "other_b",
+					DataType:   "integer",
+					IsNullable: true,
+					Relation: &ColumnRelation{
+						Table:  "tableB",
+						Column: "id",
+					},
+				},
+			},
+			Behavior: TableBehavior{},
+		},
+		"tableB": TableMetadata{
+			Name: "tableB",
+			Columns: map[Column]ColumnMetadata{
+				"id": {
+					Name:     "id",
+					DataType: "integer",
+				},
+				"other_c": {
+					Name:     "other_c",
+					DataType: "text",
+					Relation: &ColumnRelation{
+						Table:  "tableC",
+						Column: "name",
+					},
+				},
+			},
+			Behavior: TableBehavior{},
+		},
+		"tableC": TableMetadata{
+			Name: "tableC",
+			Columns: map[Column]ColumnMetadata{
+				"name": {
+					Name:     "name",
+					DataType: "text",
+				},
+				"description": {
+					Name:       "description",
+					DataType:   "text",
+					IsNullable: true,
+				},
+			},
+			Behavior: TableBehavior{},
+		},
+	}
+
+	tcs := []testCase{
+		{
+			Desc: "Select column from table A and C. Should have 3 rows",
+			Query: Query{
+				Select: []ColumnSelector{
+					"id",
+					"other_b.other_c.name",
+				},
+				From:  "tableA",
+				Limit: 5},
+			Expected: QueryResult{
+				Data: []map[string]any{
+					{"id": int32(4), "other_b.other_c.name": "tableC1"},
+					{"id": int32(5), "other_b.other_c.name": "tableC2"},
+					{"id": int32(6), "other_b.other_c.name": nil},
+				},
+				Limit: 5,
+				Total: 3,
+			},
+		},
+	}
+
+	runTests(t, c, schema, "tableA", expectedTables, tcs)
 }
 
 func runTests(t *testing.T, c Config, schema string, baseTable Table, expectedTables TablesMetadata, tcs []testCase) {
