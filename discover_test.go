@@ -15,7 +15,7 @@ const (
 )
 
 func TestDiscoverSimpleTable1(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	c := Config{
 		FilterOperations: DefaultFilterOperations,
@@ -131,7 +131,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 }
 
 func TestDiscoverTableWithRelation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	defaultFilterOperations := []FilterOperator{"equal", "notEqual"}
 

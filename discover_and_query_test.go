@@ -1,7 +1,6 @@
 package pgd
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -17,8 +16,6 @@ type testCase struct {
 }
 
 func TestDiscoverAndQueryData(t *testing.T) {
-	ctx := context.Background()
-
 	schema := `
 DROP TABLE IF EXISTS "tableA";
 DROP TABLE IF EXISTS "tableB";
@@ -294,15 +291,16 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				Select: []ColumnSelector{
 					"id",
 					"name",
+					"other_b",
 					"other_b.name",
 				},
 				From:  "tableA",
 				Limit: 5},
 			Expected: QueryResult{
 				Data: []map[string]any{
-					{"id": int32(4), "name": "Alice", "other_b.name": "nameB1"},
-					{"id": int32(5), "name": "Bob", "other_b.name": "nameB2"},
-					{"id": int32(6), "name": "Charlie", "other_b.name": "nameB2"},
+					{"id": int32(4), "name": "Alice", "other_b.name": "nameB1", "other_b": int32(1)},
+					{"id": int32(5), "name": "Bob", "other_b.name": "nameB2", "other_b": int32(2)},
+					{"id": int32(6), "name": "Charlie", "other_b.name": "nameB2", "other_b": int32(2)},
 				},
 				Limit: 5,
 				Total: 3,
@@ -461,14 +459,118 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 		},
 	}
 
-	runTests(ctx, t, c, schema, "tableA", expectedTables, tcs)
+	runTests(t, c, schema, "tableA", expectedTables, tcs)
+}
+
+func TestDiscoverAndQueryWithVeryLongTableAndColumnNames(t *testing.T) {
+	schema := `
+DROP TABLE IF EXISTS "table_very_long_table_prefix_but_below_63_bytes_A";
+DROP TABLE IF EXISTS "table_very_long_table_prefix_but_below_63_bytes_B";
+DROP TABLE IF EXISTS "table_very_long_table_prefix_but_below_63_bytes_C";
+
+CREATE TABLE "table_very_long_table_prefix_but_below_63_bytes_C" (
+  very_long_column_name_very_long_id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL
+);
+
+CREATE TABLE "table_very_long_table_prefix_but_below_63_bytes_B" (
+  id INTEGER PRIMARY KEY,
+  very_long_column_name_very_long_column_name_very_long_name TEXT NOT NULL,
+	very_long_column_name_very_long_column_name_very_long_other_c INTEGER REFERENCES "table_very_long_table_prefix_but_below_63_bytes_C"(very_long_column_name_very_long_id)
+);
+
+CREATE TABLE "table_very_long_table_prefix_but_below_63_bytes_A" (
+  id INTEGER PRIMARY KEY,
+	very_long_column_name_very_long_column_name_very_long_other_b INTEGER REFERENCES "table_very_long_table_prefix_but_below_63_bytes_B"(id)
+);
+
+INSERT INTO "table_very_long_table_prefix_but_below_63_bytes_C" (very_long_column_name_very_long_id, name) VALUES
+  (1, 'nameC1'),
+  (2, 'nameC2'),
+  (3, 'nameC3');
+
+INSERT INTO "table_very_long_table_prefix_but_below_63_bytes_B" (id, very_long_column_name_very_long_column_name_very_long_name, very_long_column_name_very_long_column_name_very_long_other_c) VALUES
+  (1, 'nameB1', 2),
+  (2, 'nameB2', 2),
+  (3, 'nameB3', 3);
+
+INSERT INTO "table_very_long_table_prefix_but_below_63_bytes_A" (id, very_long_column_name_very_long_column_name_very_long_other_b) VALUES
+  (4, 2),
+  (5, 3),
+  (6, NULL);
+`
+
+	c := Config{
+		FilterOperations: DefaultFilterOperations,
+		ColumnUnknownDefault: ColumnBehavior{
+			AllowSorting:     false,
+			AllowFiltering:   false,
+			FilterOperations: nil,
+		}}
+
+	expectedTables := TablesMetadata{
+		"table_very_long_table_prefix_but_below_63_bytes_A": TableMetadata{
+			Name: "table_very_long_table_prefix_but_below_63_bytes_A",
+			Columns: map[Column]ColumnMetadata{
+				"id": {Name: Column("id"), DataType: DataType("integer")},
+				"very_long_column_name_very_long_column_name_very_long_other_b": {
+					Name:     "very_long_column_name_very_long_column_name_very_long_other_b",
+					DataType: DataType("integer"), IsNullable: true,
+					Relation: &ColumnRelation{
+						Table:  "table_very_long_table_prefix_but_below_63_bytes_B",
+						Column: Column("id")}}}},
+		"table_very_long_table_prefix_but_below_63_bytes_B": TableMetadata{
+			Name: Table("table_very_long_table_prefix_but_below_63_bytes_B"),
+			Columns: map[Column]ColumnMetadata{
+				"id": {Name: Column("id"), DataType: DataType("integer")},
+				"very_long_column_name_very_long_column_name_very_long_name": {
+					Name:     "very_long_column_name_very_long_column_name_very_long_name",
+					DataType: DataType("text")},
+				"very_long_column_name_very_long_column_name_very_long_other_c": {
+					Name:       Column("very_long_column_name_very_long_column_name_very_long_other_c"),
+					DataType:   DataType("integer"),
+					IsNullable: true,
+					Relation: &ColumnRelation{
+						Table:  Table("table_very_long_table_prefix_but_below_63_bytes_C"),
+						Column: Column("very_long_column_name_very_long_id")}}},
+		},
+		"table_very_long_table_prefix_but_below_63_bytes_C": TableMetadata{
+			Name: Table("table_very_long_table_prefix_but_below_63_bytes_C"),
+			Columns: map[Column]ColumnMetadata{
+				"name": {
+					Name:     Column("name"),
+					DataType: DataType("text")},
+				"very_long_column_name_very_long_id": {
+					Name:     Column("very_long_column_name_very_long_id"),
+					DataType: DataType("integer")}}}}
+
+	tcs := []testCase{
+		{
+			Desc: "Select columns from all tables",
+			Query: Query{
+				Select: []ColumnSelector{
+					"id",
+					"very_long_column_name_very_long_column_name_very_long_other_b",
+					"very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_name",
+					"very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_other_c",
+					"very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_other_c.very_long_column_name_very_long_id",
+				},
+				From:  "table_very_long_table_prefix_but_below_63_bytes_A",
+				Limit: 5,
+			},
+			Expected: QueryResult{
+				Data: []map[string]any{
+					{"id": int32(4), "very_long_column_name_very_long_column_name_very_long_other_b": int32(2), "very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_name": "nameB2", "very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_other_c": int32(2), "very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_other_c.very_long_column_name_very_long_id": int32(2)},
+					{"id": int32(5), "very_long_column_name_very_long_column_name_very_long_other_b": int32(3), "very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_name": "nameB3", "very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_other_c": int32(3), "very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_other_c.very_long_column_name_very_long_id": int32(3)},
+					{"id": int32(6), "very_long_column_name_very_long_column_name_very_long_other_b": any(nil), "very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_name": any(nil), "very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_other_c": any(nil), "very_long_column_name_very_long_column_name_very_long_other_b.very_long_column_name_very_long_column_name_very_long_other_c.very_long_column_name_very_long_id": any(nil)}},
+				Limit: 5, Total: 3}}}
+
+	runTests(t, c, schema, "table_very_long_table_prefix_but_below_63_bytes_A", expectedTables, tcs)
 }
 
 func TestDiscoverAndQueryDataWithEnums(t *testing.T) {
-	ctx := context.Background()
-
 	schema := `
-DROP TABLE IF EXISTS "tableD";
+DROP TABLE IF EXISTS "tableD" CASCADE;
 
 DO $$
 BEGIN
@@ -654,10 +756,11 @@ INSERT INTO "tableD" (id, name, status) VALUES
 		},
 	}
 
-	runTests(ctx, t, c, schema, "tableD", expectedTables, tcs)
+	runTests(t, c, schema, "tableD", expectedTables, tcs)
 }
 
-func runTests(ctx context.Context, t *testing.T, c Config, schema string, baseTable Table, expectedTables TablesMetadata, tcs []testCase) {
+func runTests(t *testing.T, c Config, schema string, baseTable Table, expectedTables TablesMetadata, tcs []testCase) {
+	ctx := t.Context()
 
 	api, err := NewAPI(c)
 	if err != nil {
@@ -678,9 +781,53 @@ func runTests(ctx context.Context, t *testing.T, c Config, schema string, baseTa
 			result, err := api.Discover(ctx, db, baseTable)
 			So(err, ShouldBeNil)
 
-			Convey("should have table metadata", func() {
-				So(result.TablesMetadata, ShouldResemble, expectedTables)
-			})
+			if expectedTables != nil {
+				Convey("should have table metadata", func() {
+					So(result.TablesMetadata, ShouldResemble, expectedTables)
+				})
+			}
+
+			// Convey("exhaustively check for all permutations of columns (ignoring order)", func() {
+			// 	cols := make([]ColumnSelector, 0, len(result.ColumnsMetadata))
+			// 	for col := range result.ColumnsMetadata {
+			// 		cols = append(cols, col)
+			// 	}
+			// 	slices.Sort(cols)
+			// 	N := len(cols)
+
+			// 	isBitSet := func(v uint64, i uint) bool {
+			// 		if i > 64 {
+			// 			panic("must max be 64")
+			// 		}
+			// 		return (v & (1 << i)) != 0
+			// 	}
+
+			// 	alreadyTried := set.New[string]() // set of columns already tried
+
+			// 	// run through all permutations. Whether a column is included is determined by whether the mask have the bit set matching the index in `cols`
+			// 	for mask := uint64(1); mask < (1 << N); mask++ {
+			// 		activeCols := make([]ColumnSelector, 0)
+			// 		for k := range len(cols) {
+			// 			if isBitSet(mask, uint(k)) {
+			// 				activeCols = append(activeCols, cols[k])
+			// 			}
+			// 		}
+
+			// 		s := fmt.Sprintf("%v", activeCols)
+			// 		if alreadyTried.Contains(s) {
+			// 			So(fmt.Errorf("already tried permutation of %s", s), ShouldBeNil)
+			// 		}
+			// 		alreadyTried.Add(s)
+
+			// 		_, _, err := api.Query(ctx, db, result.TablesMetadata, Query{Select: activeCols, From: baseTable, Limit: 5})
+			// 		if err != nil {
+			// 			Convey(fmt.Sprintf("permutation with active cols %v", activeCols), func() {
+			// 				So(err, ShouldBeNil)
+			// 			})
+			// 			break
+			// 		}
+			// 	}
+			// })
 
 			for idx, tc := range tcs {
 				Convey(fmt.Sprintf("index %d, %s", idx, tc.Desc), func() {

@@ -3,11 +3,18 @@ package pgd
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
+
+	"github.com/cespare/xxhash/v2"
 )
 
 var (
 	columnNameRegex = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]{1,63}$`)
+)
+
+const (
+	maxIdentifierLength = 63
 )
 
 // simple column
@@ -105,9 +112,11 @@ func (cs ColumnSelectorFull) IsValid() bool {
 	return true
 }
 
+// split selector into 2 parts where the last part is the column and other a prefix
+// If the prefix is longer than `maxIdentifierLength` it will be shortened
 func (cs ColumnSelectorFull) SplitAtLastColumn() (string, string) {
 	idx := strings.LastIndex(string(cs), ".")
-	return string(cs)[:idx], string(cs)[idx+1:]
+	return toSafeIdentifier(string(cs)[:idx]), string(cs)[idx+1:]
 }
 
 func (cs ColumnSelectorFull) GetLastTable() Table {
@@ -185,4 +194,11 @@ type ColumnBehavior struct {
 	OmitDefaultFilterOperations bool `json:"omitDefaultFilterOperations"`
 	// set of allowed filter operations, in addition to the default ones
 	FilterOperations []FilterOperator `json:"filterOperations"`
+}
+
+func toSafeIdentifier(s string) string {
+	if len(s) <= maxIdentifierLength {
+		return s
+	}
+	return strconv.FormatUint(xxhash.Sum64String(s), 16)
 }
