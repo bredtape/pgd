@@ -48,11 +48,11 @@ var (
 			}
 			return sq.Like{s: "%" + vs}, nil
 		},
-		"equal":          func(s string, v any) (sq.Sqlizer, error) { return sq.Eq{s: v}, nil },
-		"greater":        func(s string, v any) (sq.Sqlizer, error) { return sq.Gt{s: v}, nil },
-		"greaterOrEqual": func(s string, v any) (sq.Sqlizer, error) { return sq.GtOrEq{s: v}, nil },
-		"less":           func(s string, v any) (sq.Sqlizer, error) { return sq.Lt{s: v}, nil },
-		"lessOrEqual":    func(s string, v any) (sq.Sqlizer, error) { return sq.LtOrEq{s: v}, nil },
+		"equals":          func(s string, v any) (sq.Sqlizer, error) { return sq.Eq{s: v}, nil },
+		"greater":         func(s string, v any) (sq.Sqlizer, error) { return sq.Gt{s: v}, nil },
+		"greaterOrEquals": func(s string, v any) (sq.Sqlizer, error) { return sq.GtOrEq{s: v}, nil },
+		"less":            func(s string, v any) (sq.Sqlizer, error) { return sq.Lt{s: v}, nil },
+		"lessOrEquals":    func(s string, v any) (sq.Sqlizer, error) { return sq.LtOrEq{s: v}, nil },
 		"notContains": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
 			if !ok {
@@ -67,7 +67,7 @@ var (
 			}
 			return sq.NotILike{s: "%" + vs + "%"}, nil
 		},
-		"notEqual": func(s string, v any) (sq.Sqlizer, error) { return sq.NotEq{s: v}, nil },
+		"notEquals": func(s string, v any) (sq.Sqlizer, error) { return sq.NotEq{s: v}, nil },
 		"startsWith": func(s string, v any) (sq.Sqlizer, error) {
 			vs, ok := (v).(string)
 			if !ok {

@@ -62,17 +62,17 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 			DataType("integer"): {
 				AllowSorting:     true,
 				AllowFiltering:   false,
-				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
+				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
 			},
 			DataType("text"): {
 				AllowSorting:     false,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
+				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
 			},
 			DataType("double precision"): {
 				AllowSorting:     false,
 				AllowFiltering:   false,
-				FilterOperations: []FilterOperator{"equal"},
+				FilterOperations: []FilterOperator{"equals"},
 			},
 			DataType("text[]"): {
 				AllowSorting:     true,
@@ -87,15 +87,15 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 		}}
 
 	filterInt := []FilterOperator{
-		"equal",
-		"notEqual",
+		"equals",
+		"notEquals",
 		"greater",
-		"greaterOrEqual",
+		"greaterOrEquals",
 		"less",
-		"lessOrEqual",
+		"lessOrEquals",
 	}
 	filterText := filterInt
-	filterDouble := []FilterOperator{"equal"}
+	filterDouble := []FilterOperator{"equals"}
 
 	expectedTables := TablesMetadata{
 		"tableA": TableMetadata{
@@ -274,7 +274,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				Where: &WhereExpression{
 					Filter: &Filter{
 						Column:   "name",
-						Operator: "equal",
+						Operator: "equals",
 						Value:    "Bob"},
 				},
 				Limit: 5},
@@ -319,7 +319,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				Where: &WhereExpression{
 					Filter: &Filter{
 						Column:   "name",
-						Operator: "equal",
+						Operator: "equals",
 						Value:    "Bob"}},
 				Limit: 5},
 			Expected: QueryResult{
@@ -342,7 +342,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				Where: &WhereExpression{
 					Filter: &Filter{
 						Column:   "other_b.name",
-						Operator: "equal",
+						Operator: "equals",
 						Value:    "nameB1"}},
 				Limit: 5},
 			Expected: QueryResult{
@@ -390,12 +390,12 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 					Or: []WhereExpression{
 						{Filter: &Filter{
 							Column:   "other_b.id",
-							Operator: "equal",
+							Operator: "equals",
 							Value:    nil,
 						}},
 						{Filter: &Filter{
 							Column:   "other_b.id",
-							Operator: "notEqual",
+							Operator: "notEquals",
 							Value:    1,
 						}},
 					}},
@@ -594,21 +594,21 @@ INSERT INTO "tableD" (id, name, status) VALUES
 `
 
 	filterInt := []FilterOperator{
-		"equal",
-		"notEqual",
+		"equals",
+		"notEquals",
 		"greater",
-		"greaterOrEqual",
+		"greaterOrEquals",
 		"less",
-		"lessOrEqual",
+		"lessOrEquals",
 	}
 	filterTextWithContains := []FilterOperator{
-		"equal",
-		"notEqual",
+		"equals",
+		"notEquals",
 		"contains",
 	}
 	filterEnum := []FilterOperator{
-		"equal",
-		"notEqual",
+		"equals",
+		"notEquals",
 	}
 
 	expectedTables := TablesMetadata{
@@ -683,7 +683,7 @@ INSERT INTO "tableD" (id, name, status) VALUES
 				Where: &WhereExpression{
 					Filter: &Filter{
 						Column:   "status",
-						Operator: "equal",
+						Operator: "equals",
 						Value:    "active",
 					},
 				},
@@ -709,12 +709,12 @@ INSERT INTO "tableD" (id, name, status) VALUES
 					Or: []WhereExpression{
 						{Filter: &Filter{
 							Column:   "status",
-							Operator: "equal",
+							Operator: "equals",
 							Value:    "active",
 						}},
 						{Filter: &Filter{
 							Column:   "status",
-							Operator: "equal",
+							Operator: "equals",
 							Value:    "pending",
 						}},
 					},
@@ -737,17 +737,17 @@ INSERT INTO "tableD" (id, name, status) VALUES
 			DataType("integer"): {
 				AllowSorting:     true,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOperator{"equal", "notEqual", "greater", "greaterOrEqual", "less", "lessOrEqual"},
+				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
 			},
 			DataType("text"): {
 				AllowSorting:     false,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOperator{"equal", "notEqual", "contains"},
+				FilterOperations: []FilterOperator{"equals", "notEquals", "contains"},
 			},
 			DataType("user_status"): {
 				AllowSorting:     true,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOperator{"equal", "notEqual"},
+				FilterOperations: []FilterOperator{"equals", "notEquals"},
 			},
 		},
 		ColumnUnknownDefault: ColumnBehavior{

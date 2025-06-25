@@ -93,7 +93,7 @@ func TestConvertQuery(t *testing.T) {
 				Where: &WhereExpression{
 					Filter: &Filter{
 						Column:   "name",
-						Operator: "equal",
+						Operator: "equals",
 						Value:    "John Doe",
 					},
 				},
@@ -165,7 +165,7 @@ func TestConvertQuery(t *testing.T) {
 						{
 							Filter: &Filter{
 								Column:   "name",
-								Operator: "equal",
+								Operator: "equals",
 								Value:    "John Doe",
 							}},
 						{
