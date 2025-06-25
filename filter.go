@@ -11,10 +11,11 @@ import (
 
 type FilterOperator string
 
+// FilterOperations is the supported 'where' operations from name to func(column, value) -> (sq.Sqlizer, error)
+// The column is the quoted column name, but may have some prefix (uses ColumnSelectorFull.StringQuoted())
 type FilterOperations map[FilterOperator](func(string, any) (sq.Sqlizer, error))
 
 var (
-	// supported 'where' operations from name to func(column, value) -> (sq.Sqlizer, error)
 	DefaultFilterOperations = FilterOperations{
 		"any": func(s string, v any) (sq.Sqlizer, error) {
 			if v == nil {
@@ -78,11 +79,11 @@ var (
 	}
 )
 
-func (expr *WhereExpression) toSql(tables TablesMetadata, baseTable Table) (sq.Sqlizer, set.Set[ColumnSelectorFull], error) {
+func (expr *WhereExpression) toSql(filterOps FilterOperations, tables TablesMetadata, baseTable Table) (sq.Sqlizer, set.Set[ColumnSelectorFull], error) {
 
 	if expr.Filter != nil {
 		f := *expr.Filter
-		op, exists := DefaultFilterOperations[f.Operator]
+		op, exists := filterOps[f.Operator]
 		if !exists {
 			return nil, nil, fmt.Errorf("unsupported filter operation: %s", f.Operator)
 		}
@@ -104,7 +105,7 @@ func (expr *WhereExpression) toSql(tables TablesMetadata, baseTable Table) (sq.S
 		var conj sq.And
 		cols := set.New[ColumnSelectorFull](len(expr.And))
 		for _, e := range expr.And {
-			p, cs, err := e.toSql(tables, baseTable)
+			p, cs, err := e.toSql(filterOps, tables, baseTable)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -118,7 +119,7 @@ func (expr *WhereExpression) toSql(tables TablesMetadata, baseTable Table) (sq.S
 		var conj sq.Or
 		cols := set.New[ColumnSelectorFull](len(expr.Or))
 		for _, e := range expr.Or {
-			p, cs, err := e.toSql(tables, baseTable)
+			p, cs, err := e.toSql(filterOps, tables, baseTable)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -131,7 +132,7 @@ func (expr *WhereExpression) toSql(tables TablesMetadata, baseTable Table) (sq.S
 	return nil, nil, fmt.Errorf("invalid where expression")
 }
 
-// where/fitler expression
+// WhereExpression represents a where/filter expression
 // Must have exactly one of And, Or, Not or Filter set.
 type WhereExpression struct {
 	And    []WhereExpression `json:"and"`

@@ -189,7 +189,7 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 		PlaceholderFormat(sq.Dollar)
 
 	if query.Where != nil {
-		qf, cs, err := query.Where.toSql(tables, query.From)
+		qf, cs, err := query.Where.toSql(api.c.FilterOperations, tables, query.From)
 		if err != nil {
 			return emptySelect, emptySelect, errors.Wrap(err, "invalid filter expression")
 		}

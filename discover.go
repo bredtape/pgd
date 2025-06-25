@@ -41,7 +41,7 @@ type DiscoverResult struct {
 	ColumnsMetadata map[ColumnSelector]ColumnMetadata `json:"columns"` // map of all columns. Same content as TablesMetadata, but flattened
 }
 
-// discover base table and all related tables
+// Discover retrieves metadata for the base table and all related tables.
 func (api *API) Discover(ctx context.Context, conn *pgx.Conn, baseTable Table) (DiscoverResult, error) {
 	tables := make(TablesMetadata, 1)
 	err := api.discoverWithRelations(ctx, conn, tables, baseTable)
