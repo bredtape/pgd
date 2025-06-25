@@ -20,17 +20,17 @@ func TestDiscoverSimpleTable1(t *testing.T) {
 	c := Config{
 		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
-			DataType("integer"): {
+			"integer": {
 				AllowSorting:     true,
 				AllowFiltering:   false,
 				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
 			},
-			DataType("text"): {
+			"text": {
 				AllowSorting:     false,
 				AllowFiltering:   true,
 				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
 			},
-			DataType("double precision"): {
+			"double precision": {
 				AllowSorting:     false,
 				AllowFiltering:   false,
 				FilterOperations: []FilterOperator{"equals"},
@@ -138,11 +138,11 @@ func TestDiscoverTableWithRelation(t *testing.T) {
 	c := Config{
 		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
-			DataType("integer"): {
+			"integer": {
 				AllowSorting:     true,
 				AllowFiltering:   true,
 				FilterOperations: defaultFilterOperations},
-			DataType("text"): {
+			"text": {
 				AllowSorting:     false,
 				AllowFiltering:   true,
 				FilterOperations: defaultFilterOperations}}}

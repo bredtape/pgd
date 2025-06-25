@@ -59,22 +59,22 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 	c := Config{
 		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
-			DataType("integer"): {
+			"integer": {
 				AllowSorting:     true,
 				AllowFiltering:   false,
 				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
 			},
-			DataType("text"): {
+			"text": {
 				AllowSorting:     false,
 				AllowFiltering:   true,
 				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
 			},
-			DataType("double precision"): {
+			"double precision": {
 				AllowSorting:     false,
 				AllowFiltering:   false,
 				FilterOperations: []FilterOperator{"equals"},
 			},
-			DataType("text[]"): {
+			"text[]": {
 				AllowSorting:     true,
 				AllowFiltering:   true,
 				FilterOperations: []FilterOperator{"any"},
@@ -513,37 +513,42 @@ INSERT INTO "table_very_long_table_prefix_but_below_63_bytes_A" (id, very_long_c
 		"table_very_long_table_prefix_but_below_63_bytes_A": TableMetadata{
 			Name: "table_very_long_table_prefix_but_below_63_bytes_A",
 			Columns: map[Column]ColumnMetadata{
-				"id": {Name: Column("id"), DataType: DataType("integer")},
+				"id": {
+					Name:     "id",
+					DataType: "integer"},
 				"very_long_column_name_very_long_column_name_very_long_other_b": {
-					Name:     "very_long_column_name_very_long_column_name_very_long_other_b",
-					DataType: DataType("integer"), IsNullable: true,
-					Relation: &ColumnRelation{
-						Table:  "table_very_long_table_prefix_but_below_63_bytes_B",
-						Column: Column("id")}}}},
-		"table_very_long_table_prefix_but_below_63_bytes_B": TableMetadata{
-			Name: Table("table_very_long_table_prefix_but_below_63_bytes_B"),
-			Columns: map[Column]ColumnMetadata{
-				"id": {Name: Column("id"), DataType: DataType("integer")},
-				"very_long_column_name_very_long_column_name_very_long_name": {
-					Name:     "very_long_column_name_very_long_column_name_very_long_name",
-					DataType: DataType("text")},
-				"very_long_column_name_very_long_column_name_very_long_other_c": {
-					Name:       Column("very_long_column_name_very_long_column_name_very_long_other_c"),
-					DataType:   DataType("integer"),
+					Name:       "very_long_column_name_very_long_column_name_very_long_other_b",
+					DataType:   "integer",
 					IsNullable: true,
 					Relation: &ColumnRelation{
-						Table:  Table("table_very_long_table_prefix_but_below_63_bytes_C"),
-						Column: Column("very_long_column_name_very_long_id")}}},
+						Table:  "table_very_long_table_prefix_but_below_63_bytes_B",
+						Column: "id"}}}},
+		"table_very_long_table_prefix_but_below_63_bytes_B": TableMetadata{
+			Name: "table_very_long_table_prefix_but_below_63_bytes_B",
+			Columns: map[Column]ColumnMetadata{
+				"id": {
+					Name:     "id",
+					DataType: "integer"},
+				"very_long_column_name_very_long_column_name_very_long_name": {
+					Name:     "very_long_column_name_very_long_column_name_very_long_name",
+					DataType: "text"},
+				"very_long_column_name_very_long_column_name_very_long_other_c": {
+					Name:       "very_long_column_name_very_long_column_name_very_long_other_c",
+					DataType:   "integer",
+					IsNullable: true,
+					Relation: &ColumnRelation{
+						Table:  "table_very_long_table_prefix_but_below_63_bytes_C",
+						Column: "very_long_column_name_very_long_id"}}},
 		},
 		"table_very_long_table_prefix_but_below_63_bytes_C": TableMetadata{
-			Name: Table("table_very_long_table_prefix_but_below_63_bytes_C"),
+			Name: "table_very_long_table_prefix_but_below_63_bytes_C",
 			Columns: map[Column]ColumnMetadata{
 				"name": {
-					Name:     Column("name"),
-					DataType: DataType("text")},
+					Name:     "name",
+					DataType: "text"},
 				"very_long_column_name_very_long_id": {
-					Name:     Column("very_long_column_name_very_long_id"),
-					DataType: DataType("integer")}}}}
+					Name:     "very_long_column_name_very_long_id",
+					DataType: "integer"}}}}
 
 	tcs := []testCase{
 		{
@@ -734,17 +739,17 @@ INSERT INTO "tableD" (id, name, status) VALUES
 	c := Config{
 		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
-			DataType("integer"): {
+			"integer": {
 				AllowSorting:     true,
 				AllowFiltering:   true,
 				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
 			},
-			DataType("text"): {
+			"text": {
 				AllowSorting:     false,
 				AllowFiltering:   true,
 				FilterOperations: []FilterOperator{"equals", "notEquals", "contains"},
 			},
-			DataType("user_status"): {
+			"user_status": {
 				AllowSorting:     true,
 				AllowFiltering:   true,
 				FilterOperations: []FilterOperator{"equals", "notEquals"},
