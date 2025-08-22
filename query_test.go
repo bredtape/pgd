@@ -8,7 +8,6 @@ import (
 )
 
 func TestColumnSelector(t *testing.T) {
-
 	cs := ColumnSelectorFull("a.x.b.y.c.z")
 	Convey("Given column selector "+cs.String(), t, func() {
 		Convey("except last column", func() {
@@ -34,7 +33,6 @@ func TestColumnSelector(t *testing.T) {
 }
 
 func TestConvertQuery(t *testing.T) {
-
 	tables := TablesMetadata{
 		"table1": {
 			Name: "table1",

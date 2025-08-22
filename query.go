@@ -189,15 +189,11 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 		PlaceholderFormat(sq.Dollar)
 
 	if query.Where != nil {
-		qf, cs, err := query.Where.toSql(api.c.FilterOperations, tables, query.From)
+		qf, err := query.Where.toSql(api.c.FilterOperations, tables, query.From)
 		if err != nil {
 			return emptySelect, emptySelect, errors.Wrap(err, "invalid filter expression")
 		}
 
-		if !cs.IsSubsetOf(columnsUsed) {
-			less, _, _ := cs.Diff(columnsUsed)
-			return emptySelect, emptySelect, fmt.Errorf("invalid filter expression, some columns were used in where filter expression, but not in select: %s", less.String())
-		}
 		qPage = qPage.Where(qf)
 		qTotal = qTotal.Where(qf)
 	}
