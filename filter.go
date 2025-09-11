@@ -79,7 +79,7 @@ var (
 	}
 )
 
-func (expr *WhereExpression) toSql(filterOps FilterOperations, tables TablesMetadata, baseTable Table) (sq.Sqlizer, set.Set[ColumnSelectorFull], error) {
+func (expr *WhereExpression) toSQL(filterOps FilterOperations, tables TablesMetadata, baseTable Table) (sq.Sqlizer, set.Set[ColumnSelectorFull], error) {
 
 	if expr.Filter != nil {
 		f := *expr.Filter
@@ -105,7 +105,7 @@ func (expr *WhereExpression) toSql(filterOps FilterOperations, tables TablesMeta
 		var conj sq.And
 		cols := set.New[ColumnSelectorFull](len(expr.And))
 		for _, e := range expr.And {
-			p, cs, err := e.toSql(filterOps, tables, baseTable)
+			p, cs, err := e.toSQL(filterOps, tables, baseTable)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -119,7 +119,7 @@ func (expr *WhereExpression) toSql(filterOps FilterOperations, tables TablesMeta
 		var conj sq.Or
 		cols := set.New[ColumnSelectorFull](len(expr.Or))
 		for _, e := range expr.Or {
-			p, cs, err := e.toSql(filterOps, tables, baseTable)
+			p, cs, err := e.toSQL(filterOps, tables, baseTable)
 			if err != nil {
 				return nil, nil, err
 			}
