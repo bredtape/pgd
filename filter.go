@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/bredtape/set"
 	"github.com/pkg/errors"
 )
 
@@ -78,64 +79,57 @@ var (
 	}
 )
 
-func (expr *WhereExpression) toSql(filterOps FilterOperations, tables TablesMetadata, baseTable Table) (sq.Sqlizer, error) {
+func (expr *WhereExpression) toSql(filterOps FilterOperations, tables TablesMetadata, baseTable Table) (sq.Sqlizer, set.Set[ColumnSelectorFull], error) {
 
 	if expr.Filter != nil {
 		f := *expr.Filter
 		op, exists := filterOps[f.Operator]
 		if !exists {
-			return nil, fmt.Errorf("unsupported filter operation: %s", f.Operator)
+			return nil, nil, fmt.Errorf("unsupported filter operation: %s", f.Operator)
 		}
 		cbs, err := tables.ConvertColumnSelectors(baseTable, f.Column)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		cb := cbs[0]
+		cols := set.NewValues(cb)
 
 		x, err := op(cb.StringQuoted(), f.Value)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		return x, nil
+		return x, cols, nil
 	}
 
 	if len(expr.And) > 0 {
 		var conj sq.And
+		cols := set.New[ColumnSelectorFull](len(expr.And))
 		for _, e := range expr.And {
-			p, err := e.toSql(filterOps, tables, baseTable)
+			p, cs, err := e.toSql(filterOps, tables, baseTable)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			conj = append(conj, p)
+			cols.AddSets(cs)
 		}
-		return conj, nil
+		return conj, cols, nil
 	}
 
 	if len(expr.Or) > 0 {
 		var conj sq.Or
+		cols := set.New[ColumnSelectorFull](len(expr.Or))
 		for _, e := range expr.Or {
-			p, err := e.toSql(filterOps, tables, baseTable)
+			p, cs, err := e.toSql(filterOps, tables, baseTable)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			conj = append(conj, p)
+			cols.AddSets(cs)
 		}
-		return conj, nil
+		return conj, cols, nil
 	}
 
-	if len(expr.Or) > 0 {
-		var conj sq.Or
-		for _, e := range expr.Or {
-			p, err := e.toSql(filterOps, tables, baseTable)
-			if err != nil {
-				return nil, err
-			}
-			conj = append(conj, p)
-		}
-		return conj, nil
-	}
-
-	return nil, fmt.Errorf("invalid where expression")
+	return nil, nil, fmt.Errorf("invalid where expression")
 }
 
 // WhereExpression represents a where/filter expression
