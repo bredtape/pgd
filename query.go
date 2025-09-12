@@ -226,11 +226,11 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 			return emptySelect, emptySelect, fmt.Errorf("invalid order by column selector %s, not used in select", cs.String())
 		}
 
+		suffix := ""
 		if c.IsDescending {
-			qPage = qPage.OrderBy(cs.StringQuoted() + " DESC")
-		} else {
-			qPage = qPage.OrderBy(cs.StringQuoted())
+			suffix = " DESC"
 		}
+		qPage = qPage.OrderBy(cs.StringQuoted() + suffix)
 	}
 
 	return qPage, qTotal, nil
