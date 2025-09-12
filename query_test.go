@@ -175,9 +175,9 @@ func TestConvertQuery(t *testing.T) {
 					}},
 				Limit: 10,
 			},
-			expectedQuery:      `SELECT "table1"."id", "table1"."name", "table1"."age" FROM "table1" WHERE ("table1"."name" = $1 AND "table1"."age" > $2) LIMIT 10 OFFSET 0`,
+			expectedQuery:      `SELECT "table1"."id", "table1"."name", "table1"."age" FROM "table1" WHERE ("table1"."name" = $1 AND ("table1"."age" IS NOT NULL AND "table1"."age" > $2)) LIMIT 10 OFFSET 0`,
 			expectedArgs:       []any{"John Doe", 30},
-			expectedTotalQuery: `SELECT count(*) FROM "table1" WHERE ("table1"."name" = $1 AND "table1"."age" > $2)`,
+			expectedTotalQuery: `SELECT count(*) FROM "table1" WHERE ("table1"."name" = $1 AND ("table1"."age" IS NOT NULL AND "table1"."age" > $2))`,
 			expectedTotalArgs:  []any{"John Doe", 30},
 		},
 		{

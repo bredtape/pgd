@@ -2,11 +2,11 @@ package pgd
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/pkg/errors"
 )
 
+// data type. Lower case names of postgres data types
 type DataType string
 
 type Config struct {
@@ -20,9 +20,6 @@ type Config struct {
 
 	// ColumnDefaults is a map of default column behaviors for specific data types
 	ColumnDefaults map[DataType]ColumnBehavior `json:"columnDefaults"`
-
-	// Column Behavior for unknown data types
-	ColumnUnknownDefault ColumnBehavior `json:"columnUnknownDefault"`
 }
 
 func (c *Config) Validate() error {
@@ -41,8 +38,10 @@ func (c *Config) Validate() error {
 
 	for dataType, behavior := range c.ColumnDefaults {
 		for _, filter := range behavior.FilterOperations {
-			if _, exists := c.FilterOperations[filter]; !exists {
-				return errors.New("invalid config: filterOperation for column defaults is not registered in config FilterOperations")
+			if ops, exists := c.FilterOperations[dataType]; !exists {
+				return fmt.Errorf("invalid config: filterOperation for data type '%s' is not present", dataType)
+			} else if _, exists := ops[filter]; !exists {
+				return fmt.Errorf("invalid config: filterOperation for combination of data type '%s' and filter '%s' is not registered", dataType, filter)
 			}
 		}
 
@@ -51,22 +50,5 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	for _, filter := range c.ColumnUnknownDefault.FilterOperations {
-		if _, exists := c.FilterOperations[filter]; !exists {
-			return errors.New("invalid config: filterOperation for column unknown defaults is not registered in config FilterOperations")
-		}
-	}
-	if c.ColumnUnknownDefault.AllowFiltering && len(c.ColumnUnknownDefault.FilterOperations) == 0 {
-		return fmt.Errorf("invalid config: columnUnknownDefault: filterOperations cannot be empty when allowFiltering is true")
-	}
 	return nil
-}
-
-func (c Config) GetFilterOperations() []FilterOperator {
-	keys := make([]FilterOperator, 0, len(DefaultFilterOperations))
-	for k := range c.FilterOperations {
-		keys = append(keys, k)
-	}
-	slices.Sort(keys)
-	return keys
 }

@@ -21,25 +21,22 @@ func TestDiscoverSimpleTable1(t *testing.T) {
 		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
 			"integer": {
-				AllowSorting:     true,
-				AllowFiltering:   false,
-				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
+				AllowSorting:   true,
+				AllowFiltering: false,
+				FilterOperations: []FilterOperator{
+					"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
 			},
 			"text": {
 				AllowSorting:     false,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
+				FilterOperations: []FilterOperator{"equals", "notEquals", "contains", "notContains"},
 			},
 			"double precision": {
 				AllowSorting:     false,
 				AllowFiltering:   false,
 				FilterOperations: []FilterOperator{"equals"},
 			}},
-		ColumnUnknownDefault: ColumnBehavior{
-			AllowSorting:     false,
-			AllowFiltering:   false,
-			FilterOperations: nil,
-		}}
+	}
 
 	api, err := NewAPI(c)
 	if err != nil {
@@ -90,7 +87,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 					Properties:       map[string]string{"key3": "value3"},
 					AllowSorting:     false,
 					AllowFiltering:   true,
-					FilterOperations: []FilterOperator{"contains", "equals", "greater", "greaterOrEquals", "less", "lessOrEquals", "notContains", "notEquals"}},
+					FilterOperations: []FilterOperator{"contains", "equals", "notContains", "notEquals"}},
 			},
 			"age": {
 				Name:       "age",
@@ -110,7 +107,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 					Properties:       nil,
 					AllowSorting:     false,
 					AllowFiltering:   true,
-					FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"}},
+					FilterOperations: []FilterOperator{"equals", "notEquals", "contains", "notContains"}},
 			},
 		}}
 

@@ -190,7 +190,7 @@ type ColumnBehavior struct {
 	Properties     map[string]string `json:"properties"`
 	AllowSorting   bool              `json:"allowSorting"`
 	AllowFiltering bool              `json:"allowFiltering"`
-	// whether to disable, enable or use default option for filter operations
+	// whether to omit default filter operations (for same data type)
 	OmitDefaultFilterOperations bool `json:"omitDefaultFilterOperations"`
 	// set of allowed filter operations, in addition to the default ones
 	FilterOperations []FilterOperator `json:"filterOperations"`

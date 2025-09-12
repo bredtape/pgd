@@ -36,7 +36,6 @@ func (t TableMetadata) Validate() error {
 	return nil
 }
 
-// metadata for all tables
 type TablesMetadata map[Table]TableMetadata
 
 func (ts TablesMetadata) Validate() error {

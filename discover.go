@@ -204,7 +204,7 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 			if comment != nil {
 				safeComment = *comment
 			}
-			return nil, errors.Wrapf(err, "failed to parse column behavior for column %s, datatype %s with comment '%s'", col.Name, col.DataType, safeComment)
+			return nil, errors.Wrapf(err, "failed to parse column behavior for column '%s', datatype '%s' with comment '%s'", col.Name, col.DataType, safeComment)
 		}
 		col.Behavior = b
 		tableInfo.Columns[col.Name] = col
@@ -256,7 +256,7 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 func (api *API) parseAndMergeColumnBehavior(dataType DataType, raw *string) (ColumnBehavior, error) {
 	d, exists := api.c.ColumnDefaults[dataType]
 	if !exists {
-		d = api.c.ColumnUnknownDefault
+		return d, fmt.Errorf("no column defaults for data type '%s'", dataType)
 	}
 
 	if raw == nil || *raw == "" {

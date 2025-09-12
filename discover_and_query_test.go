@@ -67,7 +67,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 			"text": {
 				AllowSorting:     false,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
+				FilterOperations: []FilterOperator{"equals", "notEquals", "contains", "notContains"},
 			},
 			"double precision": {
 				AllowSorting:     false,
@@ -77,14 +77,10 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 			"text[]": {
 				AllowSorting:     true,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOperator{"any"},
+				FilterOperations: []FilterOperator{"containsElement"},
 			},
 		},
-		ColumnUnknownDefault: ColumnBehavior{
-			AllowSorting:     false,
-			AllowFiltering:   false,
-			FilterOperations: nil,
-		}}
+	}
 
 	filterInt := []FilterOperator{
 		"equals",
@@ -94,7 +90,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 		"less",
 		"lessOrEquals",
 	}
-	filterText := filterInt
+	filterText := []FilterOperator{"equals", "notEquals", "contains", "notContains"}
 	filterDouble := []FilterOperator{"equals"}
 
 	expectedTables := TablesMetadata{
@@ -166,7 +162,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 					Behavior: ColumnBehavior{
 						AllowSorting:     true,
 						AllowFiltering:   true,
-						FilterOperations: []FilterOperator{"any"},
+						FilterOperations: []FilterOperator{"containsElement"},
 					},
 				},
 			},
@@ -447,7 +443,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				Where: &WhereExpression{
 					Filter: &Filter{
 						Column:   "xs",
-						Operator: "any",
+						Operator: "containsElement",
 						Value:    "xx"},
 				},
 				Limit: 5,
@@ -503,10 +499,9 @@ INSERT INTO "table_very_long_table_prefix_but_below_63_bytes_A" (id, very_long_c
 
 	c := Config{
 		FilterOperations: DefaultFilterOperations,
-		ColumnUnknownDefault: ColumnBehavior{
-			AllowSorting:     false,
-			AllowFiltering:   false,
-			FilterOperations: nil,
+		ColumnDefaults: map[DataType]ColumnBehavior{
+			"integer": ColumnBehavior{},
+			"text":    ColumnBehavior{},
 		}}
 
 	expectedTables := TablesMetadata{
@@ -737,7 +732,9 @@ INSERT INTO "tableD" (id, name, status) VALUES
 	}
 
 	c := Config{
-		FilterOperations: DefaultFilterOperations,
+		FilterOperations: MergeUniqueMaps(DefaultFilterOperations, FilterOperations{
+			"user_status": EqualsFilterOperations,
+		}),
 		ColumnDefaults: map[DataType]ColumnBehavior{
 			"integer": {
 				AllowSorting:     true,
@@ -754,11 +751,6 @@ INSERT INTO "tableD" (id, name, status) VALUES
 				AllowFiltering:   true,
 				FilterOperations: []FilterOperator{"equals", "notEquals"},
 			},
-		},
-		ColumnUnknownDefault: ColumnBehavior{
-			AllowSorting:     false,
-			AllowFiltering:   false,
-			FilterOperations: nil,
 		},
 	}
 
@@ -806,10 +798,9 @@ INSERT INTO "tableA" (id, other_b) VALUES
 
 	c := Config{
 		FilterOperations: DefaultFilterOperations,
-		ColumnUnknownDefault: ColumnBehavior{
-			AllowSorting:     false,
-			AllowFiltering:   false,
-			FilterOperations: nil,
+		ColumnDefaults: map[DataType]ColumnBehavior{
+			"integer": ColumnBehavior{},
+			"text":    ColumnBehavior{},
 		}}
 
 	expectedTables := TablesMetadata{
