@@ -45,8 +45,13 @@ func (c *Config) Validate() error {
 			}
 		}
 
-		if behavior.AllowFiltering && len(behavior.FilterOperations) == 0 {
-			return fmt.Errorf("invalid config: %s: filterOperations cannot be empty when allowFiltering is true", dataType)
+		if behavior.AllowFiltering {
+			if behavior.OmitDefaultFilterOperations && len(behavior.FilterOperations) == 0 {
+				return fmt.Errorf("invalid config: %s: filterOperations cannot be empty when allowFiltering is true (and with omit default filter operations)", dataType)
+			}
+			if !behavior.OmitDefaultFilterOperations && len(behavior.FilterOperations) == 0 && len(c.FilterOperations[dataType]) == 0 {
+				return fmt.Errorf("invalid config: %s: filterOperations cannot be empty when allowFiltering is true (including default filter operations)", dataType)
+			}
 		}
 	}
 
