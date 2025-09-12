@@ -19,3 +19,12 @@ Comments may be placed on columns to provide additional metadata. The comment mu
 ```
 
 All fields are optional and if not set, will use the default values provided in the `Config` struct.
+
+## Issues
+
+- Sorting on nullable columns ascending should have non-null values first and
+  sorting descending should have null values first.
+
+## Wish list
+
+- Implement helper/method to expand wildcards in Query.Select. A \* replaces substitutes for any table/column (but does not match .) and a > includes everything remaining.

@@ -122,6 +122,7 @@ var (
 		"text":                        MergeUniqueMaps(EqualsFilterOperations, TextFilterOperations),
 		"text[]":                      MergeUniqueMaps(ArrayFilterOperations),
 		"timestamp without time zone": TimestampFilterOperations,
+		"uuid":                        EqualsFilterOperations,
 	}
 )
 

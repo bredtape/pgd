@@ -2,6 +2,7 @@ package pgd
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -23,17 +24,17 @@ func TestDiscoverSimpleTable1(t *testing.T) {
 			"integer": {
 				AllowSorting:   true,
 				AllowFiltering: false,
-				FilterOperations: []FilterOperator{
-					"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
+				//FilterOperations: []FilterOperator{					"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"				},
 			},
 			"text": {
-				AllowSorting:     false,
-				AllowFiltering:   true,
-				FilterOperations: []FilterOperator{"equals", "notEquals", "contains", "notContains"},
+				AllowSorting:   false,
+				AllowFiltering: true,
+				//FilterOperations: []FilterOperator{"equals", "notEquals", "contains", "notContains"},
 			},
 			"double precision": {
-				AllowSorting:     false,
-				AllowFiltering:   false,
+				AllowSorting:   false,
+				AllowFiltering: false,
+				//OmitDefaultFilterOperations: true,
 				FilterOperations: []FilterOperator{"equals"},
 			}},
 	}
@@ -87,7 +88,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 					Properties:       map[string]string{"key3": "value3"},
 					AllowSorting:     false,
 					AllowFiltering:   true,
-					FilterOperations: []FilterOperator{"contains", "equals", "notContains", "notEquals"}},
+					FilterOperations: []FilterOperator{"contains", "notContains"}},
 			},
 			"age": {
 				Name:       "age",
@@ -107,7 +108,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 					Properties:       nil,
 					AllowSorting:     false,
 					AllowFiltering:   true,
-					FilterOperations: []FilterOperator{"equals", "notEquals", "contains", "notContains"}},
+					FilterOperations: []FilterOperator{"contains", "endsWith", "equals", "isNotSpecified", "isSpecified", "notContains", "notEquals", "startsWith"}},
 			},
 		}}
 
@@ -115,16 +116,35 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 		_, err = db.Exec(ctx, schema)
 		So(err, ShouldBeNil)
 
+		Printf("text filter operations: %v\n", getMapKeys(c.FilterOperations["text"]))
+
 		Convey("Discover table1", func() {
 			result, err := api.Discover(ctx, db, "table1")
 			So(err, ShouldBeNil)
 
 			Convey("should have table metadata", func() {
 				So(result.TablesMetadata, ShouldHaveLength, 1)
-				So(result.TablesMetadata["table1"], ShouldResemble, expected)
+				So(tableMetadataToJSON(result.TablesMetadata["table1"]), ShouldResemble, tableMetadataToJSON(expected))
 			})
+
+			// for c, meta := range result.TablesMetadata["table1"].Columns {
+			// 	Convey("column "+c, func() {
+			// 		if meta.Behavior.AllowFiltering {
+			// 			Convey("with allow filtering, it should have some filters", func() {
+			// 				So(meta.Behavior.FilterOperations, ShouldNotBeEmpty)
+			// 			})
+			// 		}
+			// 	})
+			// }
 		})
 	})
+}
+
+func tableMetadataToJSON(m TableMetadata) map[string]any {
+	data, _ := json.Marshal(m)
+	var result map[string]any
+	json.Unmarshal(data, &result)
+	return result
 }
 
 func TestDiscoverTableWithRelation(t *testing.T) {

@@ -259,43 +259,57 @@ func (api *API) parseAndMergeColumnBehavior(dataType DataType, raw *string) (Col
 		return d, fmt.Errorf("no column defaults for data type '%s'", dataType)
 	}
 
-	if raw == nil || *raw == "" {
-		return d, nil
-	}
-
-	// Unmarshal the raw JSON string into a map to check whether optional keys are present
+	// Unmarshal the optional raw JSON string into a map to check whether optional keys are present
+	// If not, use ColumnDefaults and defined FilterOperations
 	var m map[string]any
-	err := json.Unmarshal([]byte(*raw), &m)
-	if err != nil {
-		return ColumnBehavior{}, errors.Wrap(err, "failed to unmarshal column behavior")
-	}
-
 	var b ColumnBehavior
-	if err := json.Unmarshal([]byte(*raw), &b); err != nil {
-		return ColumnBehavior{}, errors.Wrap(err, "failed to unmarshal column behavior")
+
+	if raw != nil && *raw != "" {
+		err := json.Unmarshal([]byte(*raw), &m)
+		if err != nil {
+			return ColumnBehavior{}, errors.Wrap(err, "failed to unmarshal column behavior")
+		}
+
+		if err := json.Unmarshal([]byte(*raw), &b); err != nil {
+			return ColumnBehavior{}, errors.Wrap(err, "failed to unmarshal column behavior")
+		}
 	}
 
 	if _, exists := m["allowSorting"]; !exists {
 		b.AllowSorting = d.AllowSorting
 	}
+
 	if _, exists := m["allowFiltering"]; !exists {
 		b.AllowFiltering = d.AllowFiltering
 	}
-	if _, exists := m["omitDefaultFilterOperations"]; !exists {
-		b.OmitDefaultFilterOperations = d.OmitDefaultFilterOperations
-	}
-	if _, exists := m["filterOperations"]; !exists {
-		b.FilterOperations = d.FilterOperations
-	}
 
-	if !b.OmitDefaultFilterOperations {
-		b.FilterOperations = append(b.FilterOperations, d.FilterOperations...)
-	}
+	if b.AllowFiltering {
+		filters, exists := api.c.FilterOperations[dataType]
+		if !exists || len(filters) == 0 {
+			return b, fmt.Errorf("no FilterOperations defined for dataType '%s'", dataType)
+		}
 
-	b.FilterOperations = uniqueSliceString(b.FilterOperations)
+		if _, exists := m["filterOperations"]; !exists {
+			b.FilterOperations = d.FilterOperations
+		}
 
-	if !b.AllowFiltering {
+		if len(b.FilterOperations) == 0 {
+			b.FilterOperations = getMapKeys(filters)
+		}
+
+		b.FilterOperations = uniqueSliceString(b.FilterOperations)
+
+		for _, k := range b.FilterOperations {
+			if _, exists := filters[k]; !exists {
+				return b, fmt.Errorf("FilterOperation '%s' does not exist for data type '%s' (available %v)", k, dataType, getMapKeys(filters))
+			}
+		}
+	} else {
 		b.FilterOperations = nil
+	}
+
+	if b.AllowFiltering && len(b.FilterOperations) == 0 {
+		return b, fmt.Errorf("allowFiltering was set, but resulted in FilterOperations")
 	}
 
 	return b, nil
@@ -303,12 +317,21 @@ func (api *API) parseAndMergeColumnBehavior(dataType DataType, raw *string) (Col
 
 func uniqueSliceString[T ~string](xs []T) []T {
 	seen := make(map[T]struct{})
-	var result []T
+	result := make([]T, 0, len(xs))
 	for _, x := range xs {
 		if _, ok := seen[x]; !ok {
 			seen[x] = struct{}{}
 			result = append(result, x)
 		}
+	}
+	slices.Sort(result)
+	return result
+}
+
+func getMapKeys[K ~string, V any](m map[K]V) []K {
+	result := make([]K, 0, len(m))
+	for k := range m {
+		result = append(result, k)
 	}
 	slices.Sort(result)
 	return result

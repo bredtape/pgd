@@ -2,6 +2,7 @@ package pgd
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -60,18 +61,17 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
 			"integer": {
-				AllowSorting:     true,
-				AllowFiltering:   false,
-				FilterOperations: []FilterOperator{"equals", "notEquals", "greater", "greaterOrEquals", "less", "lessOrEquals"},
+				AllowSorting:   true,
+				AllowFiltering: false,
 			},
 			"text": {
 				AllowSorting:     false,
 				AllowFiltering:   true,
-				FilterOperations: []FilterOperator{"equals", "notEquals", "contains", "notContains"},
+				FilterOperations: []FilterOperator{"contains", "equals", "notEquals", "notContains"},
 			},
 			"double precision": {
 				AllowSorting:     false,
-				AllowFiltering:   false,
+				AllowFiltering:   true,
 				FilterOperations: []FilterOperator{"equals"},
 			},
 			"text[]": {
@@ -82,15 +82,15 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 		},
 	}
 
-	filterInt := []FilterOperator{
-		"equals",
-		"notEquals",
-		"greater",
-		"greaterOrEquals",
-		"less",
-		"lessOrEquals",
-	}
-	filterText := []FilterOperator{"equals", "notEquals", "contains", "notContains"}
+	// filterInt := []FilterOperator{
+	// 	"equals",
+	// 	"notEquals",
+	// 	"greater",
+	// 	"greaterOrEquals",
+	// 	"less",
+	// 	"lessOrEquals",
+	// }
+	filterText := sortedSlice([]FilterOperator{"equals", "notEquals", "contains", "notContains"})
 	filterDouble := []FilterOperator{"equals"}
 
 	expectedTables := TablesMetadata{
@@ -102,9 +102,8 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 					DataType:   "integer",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
-						AllowSorting:     true,
-						AllowFiltering:   false,
-						FilterOperations: filterInt,
+						AllowSorting:   true,
+						AllowFiltering: false,
 					},
 				},
 				"name": {
@@ -123,7 +122,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 					IsNullable: true,
 					Behavior: ColumnBehavior{
 						AllowSorting:     false,
-						AllowFiltering:   false,
+						AllowFiltering:   true,
 						FilterOperations: filterDouble,
 					},
 				},
@@ -136,9 +135,8 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 						Column: "id",
 					},
 					Behavior: ColumnBehavior{
-						AllowSorting:     true,
-						AllowFiltering:   false,
-						FilterOperations: filterInt,
+						AllowSorting:   true,
+						AllowFiltering: false,
 					},
 				},
 				"other_b2": {
@@ -150,9 +148,8 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 						Column: "id",
 					},
 					Behavior: ColumnBehavior{
-						AllowSorting:     true,
-						AllowFiltering:   false,
-						FilterOperations: filterInt,
+						AllowSorting:   true,
+						AllowFiltering: false,
 					},
 				},
 				"xs": {
@@ -176,9 +173,8 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 					DataType:   "integer",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
-						AllowSorting:     true,
-						AllowFiltering:   false,
-						FilterOperations: filterInt,
+						AllowSorting:   true,
+						AllowFiltering: false,
 					},
 				},
 				"name": {
@@ -593,23 +589,20 @@ INSERT INTO "tableD" (id, name, status) VALUES
   (3, 'Charlie', 'pending');
 `
 
-	filterInt := []FilterOperator{
+	filterInt := sortedSlice([]FilterOperator{
 		"equals",
 		"notEquals",
 		"greater",
 		"greaterOrEquals",
 		"less",
-		"lessOrEquals",
-	}
-	filterTextWithContains := []FilterOperator{
+		"lessOrEquals"})
+	filterTextWithContains := sortedSlice([]FilterOperator{
 		"equals",
 		"notEquals",
-		"contains",
-	}
+		"contains"})
 	filterEnum := []FilterOperator{
 		"equals",
-		"notEquals",
-	}
+		"notEquals"}
 
 	expectedTables := TablesMetadata{
 		"tableD": TableMetadata{
@@ -906,9 +899,43 @@ func runTests(t *testing.T, c Config, schema string, baseTable Table, expectedTa
 			So(err, ShouldBeNil)
 
 			if expectedTables != nil {
-				Convey("should have table metadata", func() {
-					So(result.TablesMetadata, ShouldResemble, expectedTables)
-				})
+				shouldResembleTablesMetadata(result.TablesMetadata, expectedTables)
+
+				// Convey("should have expected table", func() {
+				// 	So(getMapKeys(result.TablesMetadata), ShouldResemble, getMapKeys(expectedTables))
+
+				for _, k := range getMapKeys(expectedTables) {
+					expectedTable := expectedTables[k]
+					actualTable := result.TablesMetadata[k]
+					Convey("table "+k.String(), func() {
+						Convey("should have same colums", func() {
+							So(getMapKeys(expectedTable.Columns), ShouldResemble, getMapKeys(actualTable.Columns))
+
+							for _, c := range getMapKeys(expectedTable.Columns) {
+								expectedMeta := expectedTable.Columns[c]
+								Convey("column "+c.String(), func() {
+									So(expectedMeta, ShouldResemble, actualTable.Columns[c])
+								})
+							}
+						})
+					})
+				}
+
+				// var errs []error
+				// for k, table := range result.TablesMetadata {
+				// 	for c, meta := range table.Columns {
+				// 		if meta.Behavior.AllowFiltering && len(meta.Behavior.FilterOperations) == 0 {
+				// 			errs = append(errs, fmt.Errorf("table %s, column %s, when AllowFiltering, FilterOperations should not be empty", k, c))
+				// 		}
+				// 		if !meta.Behavior.AllowFiltering && len(meta.Behavior.FilterOperations) > 0 {
+				// 			errs = append(errs, fmt.Errorf("table %s, column %s, when NOT AllowFiltering, FilterOperations should be empty", k, c))
+				// 		}
+				// 	}
+				// }
+				// Convey("should have no column metadata errors", func() {
+				// 	So(errs, ShouldBeEmpty)
+				// })
+
 			}
 
 			// Convey("exhaustively check for all permutations of columns (ignoring order)", func() {
@@ -1004,4 +1031,30 @@ func runTests(t *testing.T, c Config, schema string, baseTable Table, expectedTa
 			}
 		})
 	})
+}
+
+func shouldResembleTablesMetadata(actual any, expected ...any) string {
+	ats, ok := actual.(TablesMetadata)
+	if !ok {
+		return "actual should be of type TablesMetadata"
+	}
+	if len(expected) != 1 {
+		return "'expected' should have length 1"
+	}
+	ets, ok := expected[0].(TablesMetadata)
+	if !ok {
+		return "expected[0] should be of type TablesMetadata"
+	}
+
+	s := ShouldResemble(getMapKeys(ats), getMapKeys(ets))
+	if s != "" {
+		return s
+	}
+
+	return ""
+}
+
+func sortedSlice[T ~string](xs []T) []T {
+	slices.Sort(xs)
+	return xs
 }
