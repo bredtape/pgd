@@ -15,6 +15,13 @@ type FilterOperator string
 type FilterOperations map[DataType]map[FilterOperator](func(column string, value any) (sq.Sqlizer, error))
 
 var (
+	isNull = func(c string) sq.Sqlizer {
+		return sq.Expr(c + " IS NULL")
+	}
+	isNotNull = func(c string) sq.Sqlizer {
+		return sq.Expr(c + " IS NOT NULL")
+	}
+
 	EqualsFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
 		"equals": func(c string, value any) (sq.Sqlizer, error) {
 			return sq.Eq{c: value}, nil
@@ -26,24 +33,24 @@ var (
 	// compare filter operations. Always false when comparing to null
 	CompareFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
 		"greater": func(c string, value any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.Gt{c: value}}, nil
+			return sq.And{isNotNull(c), sq.Gt{c: value}}, nil
 		},
 		"greaterOrEquals": func(c string, value any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.GtOrEq{c: value}}, nil
+			return sq.And{isNotNull(c), sq.GtOrEq{c: value}}, nil
 		},
 		"less": func(c string, value any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.Lt{c: value}}, nil
+			return sq.And{isNotNull(c), sq.Lt{c: value}}, nil
 		},
 		"lessOrEquals": func(c string, value any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.LtOrEq{c: value}}, nil
+			return sq.And{isNotNull(c), sq.LtOrEq{c: value}}, nil
 		},
 	}
 	NumberZeroFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
 		"isSpecified": func(c string, value any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.Expr(c + " <> 0")}, nil
+			return sq.And{isNotNull(c), sq.Expr(c + " <> 0")}, nil
 		},
 		"isNotSpecified": func(c string, value any) (sq.Sqlizer, error) {
-			return sq.Or{sq.Eq{c: nil}, sq.Expr(c + " = 0")}, nil
+			return sq.Or{isNull(c), sq.Expr(c + " = 0")}, nil
 		},
 	}
 	TextFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
@@ -52,64 +59,64 @@ var (
 			if !ok {
 				return nil, errors.New("only supported for string")
 			}
-			return sq.And{sq.NotEq{c: nil}, sq.ILike{c: "%" + s + "%"}}, nil
+			return sq.And{isNotNull(c), sq.ILike{c: "%" + s + "%"}}, nil
 		},
 		"endsWith": func(c string, v any) (sq.Sqlizer, error) {
 			s, ok := (v).(string)
 			if !ok {
 				return nil, errors.New("only supported for string")
 			}
-			return sq.And{sq.NotEq{c: nil}, sq.ILike{c: "%" + s}}, nil
+			return sq.And{isNotNull(c), sq.ILike{c: "%" + s}}, nil
 		},
 		"notContains": func(c string, v any) (sq.Sqlizer, error) {
 			s, ok := (v).(string)
 			if !ok {
 				return nil, errors.New("only supported for string")
 			}
-			return sq.Or{sq.Eq{c: nil}, sq.NotILike{c: "%" + s + "%"}}, nil
+			return sq.Or{isNull(c), sq.NotILike{c: "%" + s + "%"}}, nil
 		},
 		"isNotSpecified": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.Or{sq.Eq{c: nil}, sq.Expr(c + " = ''")}, nil
+			return sq.Or{isNull(c), sq.Expr(c + " = ''")}, nil
 		},
 		"isSpecified": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.Expr(c + " <> ''")}, nil
+			return sq.And{isNotNull(c), sq.Expr(c + " <> ''")}, nil
 		},
 		"startsWith": func(c string, v any) (sq.Sqlizer, error) {
 			s, ok := (v).(string)
 			if !ok {
 				return nil, errors.New("only supported for string")
 			}
-			return sq.And{sq.NotEq{c: nil}, sq.ILike{c: s + "%"}}, nil
+			return sq.And{isNotNull(c), sq.ILike{c: s + "%"}}, nil
 		},
 	}
 	TimestampFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
 		"after": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.Gt{c: v}}, nil
+			return sq.And{isNotNull(c), sq.Gt{c: v}}, nil
 		},
 		"before": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.Lt{c: v}}, nil
+			return sq.And{isNotNull(c), sq.Lt{c: v}}, nil
 		},
 		"isNotSpecified": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.Eq{c: nil}, nil
+			return isNull(c), nil
 		},
 		// there is no "empty" value for timestamp
 		"isSpecified": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.NotEq{c: nil}, nil
+			return isNotNull(c), nil
 		},
 	}
 
 	ArrayFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
 		"containsElement": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.Expr(fmt.Sprintf("? = ANY (%s)", c), v)}, nil
+			return sq.And{isNotNull(c), sq.Expr(fmt.Sprintf("? = ANY (%s)", c), v)}, nil
 		},
 		"hasAnyElement": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.Expr(fmt.Sprintf("CARDINALITY (%s) > 0", c), v)}, nil
+			return sq.And{isNotNull(c), sq.Expr(fmt.Sprintf("CARDINALITY (%s) > 0", c), v)}, nil
 		},
 		"hasNoElements": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.Or{sq.Eq{c: nil}, sq.Expr(fmt.Sprintf("CARDINALITY(%s) = 0", c), v)}, nil
+			return sq.Or{isNull(c), sq.Expr(fmt.Sprintf("CARDINALITY(%s) = 0", c), v)}, nil
 		},
 		"notContainsElement": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.Or{sq.Eq{c: nil}, sq.Expr(fmt.Sprintf("NOT (? = ANY (%s))", c), v)}, nil
+			return sq.Or{isNull(c), sq.Expr(fmt.Sprintf("NOT (? = ANY (%s))", c), v)}, nil
 		},
 	}
 
