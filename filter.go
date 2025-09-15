@@ -15,13 +15,14 @@ type FilterOperator string
 type FilterOperations map[DataType]map[FilterOperator](func(column string, value any) (sq.Sqlizer, error))
 
 var (
-	isNull = func(c string) sq.Sqlizer {
-		return sq.Expr(c + " IS NULL")
+	BooleanFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
+		"isNotTrue": func(c string, value any) (sq.Sqlizer, error) {
+			return sq.Or{isNull(c), sq.Expr(c + " = false")}, nil
+		},
+		"isTrue": func(c string, value any) (sq.Sqlizer, error) {
+			return sq.And{isNotNull(c), sq.Expr(c + " = true")}, nil
+		},
 	}
-	isNotNull = func(c string) sq.Sqlizer {
-		return sq.Expr(c + " IS NOT NULL")
-	}
-
 	EqualsFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
 		"equals": func(c string, value any) (sq.Sqlizer, error) {
 			return sq.Eq{c: value}, nil
@@ -123,6 +124,7 @@ var (
 	numberOps               = MergeUniqueMaps(EqualsFilterOperations, CompareFilterOperations, NumberZeroFilterOperations)
 	DefaultFilterOperations = FilterOperations{
 		"bigint":                      numberOps,
+		"boolean":                     BooleanFilterOperations,
 		"double precision":            numberOps,
 		"integer":                     numberOps,
 		"real":                        numberOps,
