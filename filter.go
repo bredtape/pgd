@@ -260,7 +260,7 @@ func MergeUniqueMaps[M ~map[K]V, K comparable, V any](src ...M) M {
 	for _, m := range src {
 		for k, v := range m {
 			if _, exists := merged[k]; exists {
-				panic("duplicate key")
+				panic(fmt.Sprintf("duplicate key '%s'", k))
 			}
 			merged[k] = v
 		}
