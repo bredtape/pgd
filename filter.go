@@ -103,10 +103,10 @@ var (
 			return sq.And{sq.NotEq{c: nil}, sq.Expr(fmt.Sprintf("? = ANY (%s)", c), v)}, nil
 		},
 		"hasAnyElement": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.Expr(fmt.Sprintf("CARDINALITY(%s)>0", c), v)}, nil
+			return sq.And{sq.NotEq{c: nil}, sq.Expr(fmt.Sprintf("CARDINALITY (%s) > 0", c), v)}, nil
 		},
 		"hasNoElements": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.Or{sq.Eq{c: nil}, sq.Expr(fmt.Sprintf("CARDINALITY(%s)=0", c), v)}, nil
+			return sq.Or{sq.Eq{c: nil}, sq.Expr(fmt.Sprintf("CARDINALITY(%s) = 0", c), v)}, nil
 		},
 		"notContainsElement": func(c string, v any) (sq.Sqlizer, error) {
 			return sq.Or{sq.Eq{c: nil}, sq.Expr(fmt.Sprintf("NOT (? = ANY (%s))", c), v)}, nil
