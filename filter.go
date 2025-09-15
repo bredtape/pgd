@@ -40,10 +40,10 @@ var (
 	}
 	NumberZeroFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
 		"isSpecified": func(c string, value any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.NotEq{c: 0}}, nil
+			return sq.And{sq.NotEq{c: nil}, sq.Expr(c + " <> 0")}, nil
 		},
 		"isNotSpecified": func(c string, value any) (sq.Sqlizer, error) {
-			return sq.Or{sq.Eq{c: nil}, sq.Eq{c: 0}}, nil
+			return sq.Or{sq.Eq{c: nil}, sq.Expr(c + " = 0")}, nil
 		},
 	}
 	TextFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
@@ -69,10 +69,10 @@ var (
 			return sq.Or{sq.Eq{c: nil}, sq.NotILike{c: "%" + s + "%"}}, nil
 		},
 		"isNotSpecified": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.Or{sq.Eq{c: nil}, sq.Eq{c: ""}}, nil
+			return sq.Or{sq.Eq{c: nil}, sq.Expr(c + " = ''")}, nil
 		},
 		"isSpecified": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.And{sq.NotEq{c: nil}, sq.NotEq{c: ""}}, nil
+			return sq.And{sq.NotEq{c: nil}, sq.Expr(c + " <> ''")}, nil
 		},
 		"startsWith": func(c string, v any) (sq.Sqlizer, error) {
 			s, ok := (v).(string)
