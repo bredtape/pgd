@@ -277,3 +277,11 @@ func MergeUniqueMaps[M ~map[K]V, K comparable, V any](src ...M) M {
 	}
 	return merged
 }
+
+func isNull(c string) sq.Sqlizer {
+	return sq.Expr(c + " IS NULL")
+}
+
+func isNotNull(c string) sq.Sqlizer {
+	return sq.Expr(c + " IS NOT NULL")
+}
