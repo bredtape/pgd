@@ -72,6 +72,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 		Columns: map[Column]ColumnMetadata{
 			"id": {
 				Name:       "id",
+				Table:      "table1",
 				DataType:   "integer",
 				IsNullable: false,
 				Behavior: ColumnBehavior{
@@ -82,6 +83,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 			},
 			"name": {
 				Name:       "name",
+				Table:      "table1",
 				DataType:   "text",
 				IsNullable: false,
 				Behavior: ColumnBehavior{
@@ -92,6 +94,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 			},
 			"age": {
 				Name:       "age",
+				Table:      "table1",
 				DataType:   "double precision",
 				IsNullable: true,
 				Behavior: ColumnBehavior{
@@ -102,6 +105,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 			},
 			"description": { // no comment on this column. Should have default behavior
 				Name:       "description",
+				Table:      "table1",
 				DataType:   "text",
 				IsNullable: true,
 				Behavior: ColumnBehavior{
@@ -195,6 +199,7 @@ CREATE TABLE table2 (
 			Columns: map[Column]ColumnMetadata{
 				"id": {
 					Name:       "id",
+					Table:      "table2",
 					DataType:   "integer",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
@@ -204,6 +209,7 @@ CREATE TABLE table2 (
 				},
 				"name": {
 					Name:       "name",
+					Table:      "table2",
 					DataType:   "text",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
@@ -213,6 +219,7 @@ CREATE TABLE table2 (
 				},
 				"other": {
 					Name:       "other",
+					Table:      "table2",
 					DataType:   "integer",
 					IsNullable: true,
 					Behavior: ColumnBehavior{
@@ -229,6 +236,7 @@ CREATE TABLE table2 (
 			Columns: map[Column]ColumnMetadata{
 				"other_id": {
 					Name:     "other_id",
+					Table:    "table3",
 					DataType: "integer",
 					Behavior: ColumnBehavior{
 						AllowSorting:     true,
@@ -237,6 +245,7 @@ CREATE TABLE table2 (
 				},
 				"other_name": {
 					Name:     "other_name",
+					Table:    "table3",
 					DataType: "text",
 					Behavior: ColumnBehavior{
 						AllowSorting:     false,

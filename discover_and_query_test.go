@@ -99,6 +99,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 			Columns: map[Column]ColumnMetadata{
 				"id": {
 					Name:       "id",
+					Table:      "tableA",
 					DataType:   "integer",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
@@ -108,6 +109,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				},
 				"name": {
 					Name:       "name",
+					Table:      "tableA",
 					DataType:   "text",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
@@ -118,6 +120,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				},
 				"age": {
 					Name:       "age",
+					Table:      "tableA",
 					DataType:   "double precision",
 					IsNullable: true,
 					Behavior: ColumnBehavior{
@@ -128,6 +131,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				},
 				"other_b": {
 					Name:       "other_b",
+					Table:      "tableA",
 					DataType:   "integer",
 					IsNullable: false,
 					Relation: &ColumnRelation{
@@ -141,6 +145,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				},
 				"other_b2": {
 					Name:       "other_b2",
+					Table:      "tableA",
 					DataType:   "integer",
 					IsNullable: true,
 					Relation: &ColumnRelation{
@@ -154,6 +159,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				},
 				"xs": {
 					Name:       "xs",
+					Table:      "tableA",
 					DataType:   "text[]",
 					IsNullable: true,
 					Behavior: ColumnBehavior{
@@ -170,6 +176,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 			Columns: map[Column]ColumnMetadata{
 				"id": {
 					Name:       "id",
+					Table:      "tableB",
 					DataType:   "integer",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
@@ -179,6 +186,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				},
 				"name": {
 					Name:       "name",
+					Table:      "tableB",
 					DataType:   "text",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
@@ -189,6 +197,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				},
 				"other_c": {
 					Name:       "other_c",
+					Table:      "tableB",
 					DataType:   "text",
 					IsNullable: true,
 					Relation: &ColumnRelation{
@@ -209,6 +218,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 			Columns: map[Column]ColumnMetadata{
 				"name": {
 					Name:       "name",
+					Table:      "tableC",
 					DataType:   "text",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
@@ -219,6 +229,7 @@ INSERT INTO "tableA" (id, name, age, other_b, other_b2, xs) VALUES
 				},
 				"description": {
 					Name:       "description",
+					Table:      "tableC",
 					DataType:   "text",
 					IsNullable: true,
 					Behavior: ColumnBehavior{
@@ -506,9 +517,11 @@ INSERT INTO "table_very_long_table_prefix_but_below_63_bytes_A" (id, very_long_c
 			Columns: map[Column]ColumnMetadata{
 				"id": {
 					Name:     "id",
+					Table:    "table_very_long_table_prefix_but_below_63_bytes_A",
 					DataType: "integer"},
 				"very_long_column_name_very_long_column_name_very_long_other_b": {
 					Name:       "very_long_column_name_very_long_column_name_very_long_other_b",
+					Table:      "table_very_long_table_prefix_but_below_63_bytes_A",
 					DataType:   "integer",
 					IsNullable: true,
 					Relation: &ColumnRelation{
@@ -519,12 +532,15 @@ INSERT INTO "table_very_long_table_prefix_but_below_63_bytes_A" (id, very_long_c
 			Columns: map[Column]ColumnMetadata{
 				"id": {
 					Name:     "id",
+					Table:    "table_very_long_table_prefix_but_below_63_bytes_B",
 					DataType: "integer"},
 				"very_long_column_name_very_long_column_name_very_long_name": {
 					Name:     "very_long_column_name_very_long_column_name_very_long_name",
+					Table:    "table_very_long_table_prefix_but_below_63_bytes_B",
 					DataType: "text"},
 				"very_long_column_name_very_long_column_name_very_long_other_c": {
 					Name:       "very_long_column_name_very_long_column_name_very_long_other_c",
+					Table:      "table_very_long_table_prefix_but_below_63_bytes_B",
 					DataType:   "integer",
 					IsNullable: true,
 					Relation: &ColumnRelation{
@@ -536,9 +552,11 @@ INSERT INTO "table_very_long_table_prefix_but_below_63_bytes_A" (id, very_long_c
 			Columns: map[Column]ColumnMetadata{
 				"name": {
 					Name:     "name",
+					Table:    "table_very_long_table_prefix_but_below_63_bytes_C",
 					DataType: "text"},
 				"very_long_column_name_very_long_id": {
 					Name:     "very_long_column_name_very_long_id",
+					Table:    "table_very_long_table_prefix_but_below_63_bytes_C",
 					DataType: "integer"}}}}
 
 	tcs := []testCase{
@@ -610,6 +628,7 @@ INSERT INTO "tableD" (id, name, status) VALUES
 			Columns: map[Column]ColumnMetadata{
 				"id": {
 					Name:       "id",
+					Table:      "tableD",
 					DataType:   "integer",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
@@ -620,6 +639,7 @@ INSERT INTO "tableD" (id, name, status) VALUES
 				},
 				"name": {
 					Name:       "name",
+					Table:      "tableD",
 					DataType:   "text",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
@@ -630,6 +650,7 @@ INSERT INTO "tableD" (id, name, status) VALUES
 				},
 				"status": {
 					Name:       "status",
+					Table:      "tableD",
 					DataType:   "user_status",
 					IsNullable: false,
 					Behavior: ColumnBehavior{
@@ -792,8 +813,8 @@ INSERT INTO "tableA" (id, other_b) VALUES
 	c := Config{
 		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
-			"integer": ColumnBehavior{},
-			"text":    ColumnBehavior{},
+			"integer": {},
+			"text":    {},
 		}}
 
 	expectedTables := TablesMetadata{
@@ -802,10 +823,12 @@ INSERT INTO "tableA" (id, other_b) VALUES
 			Columns: map[Column]ColumnMetadata{
 				"id": {
 					Name:     "id",
+					Table:    "tableA",
 					DataType: "integer",
 				},
 				"other_b": {
 					Name:       "other_b",
+					Table:      "tableA",
 					DataType:   "integer",
 					IsNullable: true,
 					Relation: &ColumnRelation{
@@ -821,10 +844,12 @@ INSERT INTO "tableA" (id, other_b) VALUES
 			Columns: map[Column]ColumnMetadata{
 				"id": {
 					Name:     "id",
+					Table:    "tableB",
 					DataType: "integer",
 				},
 				"other_c": {
 					Name:     "other_c",
+					Table:    "tableB",
 					DataType: "text",
 					Relation: &ColumnRelation{
 						Table:  "tableC",
@@ -839,10 +864,12 @@ INSERT INTO "tableA" (id, other_b) VALUES
 			Columns: map[Column]ColumnMetadata{
 				"name": {
 					Name:     "name",
+					Table:    "tableC",
 					DataType: "text",
 				},
 				"description": {
 					Name:       "description",
+					Table:      "tableC",
 					DataType:   "text",
 					IsNullable: true,
 				},

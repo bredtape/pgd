@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/cespare/xxhash/v2"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -162,6 +163,7 @@ func ColumnSelectorRebuild(tables []Table, columns []Column) ColumnSelectorFull 
 
 type ColumnMetadata struct {
 	Name       Column          `json:"name"`
+	Table      Table           `json:"table"`
 	DataType   DataType        `json:"dataType"`
 	IsNullable bool            `json:"isNullable"`
 	Relation   *ColumnRelation `json:"relation,omitempty"`
@@ -170,13 +172,16 @@ type ColumnMetadata struct {
 
 func (c ColumnMetadata) Validate() error {
 	if c.Name == "" {
-		return fmt.Errorf("missing column name")
+		return errors.New("missing column name")
+	}
+	if !c.Table.IsValid() {
+		return errors.New("invalid table")
 	}
 	if !c.Name.IsValid() {
-		return fmt.Errorf("invalid column name")
+		return errors.New("invalid column name")
 	}
 	if c.DataType == "" {
-		return fmt.Errorf("missing column data type")
+		return errors.New("missing column data type")
 	}
 	return nil
 }

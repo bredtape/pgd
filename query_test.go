@@ -37,22 +37,18 @@ func TestConvertQuery(t *testing.T) {
 		"table1": {
 			Name: "table1",
 			Columns: map[Column]ColumnMetadata{
-				"id":   {Name: "id", DataType: "integer"},
-				"name": {Name: "name", DataType: "text"},
-				"age":  {Name: "age", DataType: "integer"},
-				"other": {Name: "other", DataType: "integer",
-					IsNullable: false,
-					Relation:   &ColumnRelation{Table: "table2", Column: "id"}},
-				"other_null": {Name: "other_null", DataType: "integer",
-					IsNullable: true,
-					Relation:   &ColumnRelation{Table: "table2", Column: "id"}},
+				"id":         {Name: "id", Table: "table1", DataType: "integer"},
+				"name":       {Name: "name", Table: "table1", DataType: "text"},
+				"age":        {Name: "age", Table: "table1", DataType: "integer"},
+				"other":      {Name: "other", Table: "table1", DataType: "integer", IsNullable: false, Relation: &ColumnRelation{Table: "table2", Column: "id"}},
+				"other_null": {Name: "other_null", Table: "table1", DataType: "integer", IsNullable: true, Relation: &ColumnRelation{Table: "table2", Column: "id"}},
 			},
 		},
 		"table2": { // foreign table
 			Name: "table2",
 			Columns: map[Column]ColumnMetadata{
-				"id":   {Name: "id", DataType: "integer", IsNullable: false},
-				"name": {Name: "name", DataType: "text"},
+				"id":   {Name: "id", Table: "table2", DataType: "integer", IsNullable: false},
+				"name": {Name: "name", Table: "table2", DataType: "text"},
 			},
 		},
 	}

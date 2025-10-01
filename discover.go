@@ -193,7 +193,7 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 	defer rows.Close()
 
 	for rows.Next() {
-		var col ColumnMetadata
+		col := ColumnMetadata{Table: table}
 		var comment *string
 		if err := rows.Scan(&col.Name, &col.DataType, &col.IsNullable, &comment); err != nil {
 			return nil, errors.Wrap(err, "failed to scan column details")
