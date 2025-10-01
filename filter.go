@@ -264,7 +264,7 @@ func (f Filter) Validate() error {
 	return nil
 }
 
-// MergeUniqueMaps ... Will panic if duplicate key is found
+// MergeUniqueMaps ... Will panic if a duplicate key is found
 func MergeUniqueMaps[M ~map[K]V, K comparable, V any](src ...M) M {
 	merged := make(M)
 	for _, m := range src {
