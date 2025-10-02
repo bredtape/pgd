@@ -47,11 +47,11 @@ var (
 		},
 	}
 	NumberZeroFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
-		"isSpecified": func(c string, value any) (sq.Sqlizer, error) {
-			return sq.And{isNotNull(c), sq.Expr(c + " <> 0")}, nil
-		},
 		"isNotSpecified": func(c string, value any) (sq.Sqlizer, error) {
 			return sq.Or{isNull(c), sq.Expr(c + " = 0")}, nil
+		},
+		"isSpecified": func(c string, value any) (sq.Sqlizer, error) {
+			return sq.And{isNotNull(c), sq.Expr(c + " <> 0")}, nil
 		},
 	}
 	TextFilterOperations = map[FilterOperator]func(column string, value any) (sq.Sqlizer, error){
@@ -69,18 +69,18 @@ var (
 			}
 			return sq.And{isNotNull(c), sq.ILike{c: "%" + s}}, nil
 		},
+		"isNotSpecified": func(c string, v any) (sq.Sqlizer, error) {
+			return sq.Or{isNull(c), sq.Expr(c + " = ''")}, nil
+		},
+		"isSpecified": func(c string, v any) (sq.Sqlizer, error) {
+			return sq.And{isNotNull(c), sq.Expr(c + " <> ''")}, nil
+		},
 		"notContains": func(c string, v any) (sq.Sqlizer, error) {
 			s, ok := (v).(string)
 			if !ok {
 				return nil, errors.New("only supported for string")
 			}
 			return sq.Or{isNull(c), sq.NotILike{c: "%" + s + "%"}}, nil
-		},
-		"isNotSpecified": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.Or{isNull(c), sq.Expr(c + " = ''")}, nil
-		},
-		"isSpecified": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.And{isNotNull(c), sq.Expr(c + " <> ''")}, nil
 		},
 		"startsWith": func(c string, v any) (sq.Sqlizer, error) {
 			s, ok := (v).(string)
@@ -110,11 +110,11 @@ var (
 		"containsElement": func(c string, v any) (sq.Sqlizer, error) {
 			return sq.And{isNotNull(c), sq.Expr(fmt.Sprintf("? = ANY (%s)", c), v)}, nil
 		},
-		"hasSomeElements": func(c string, v any) (sq.Sqlizer, error) {
-			return sq.And{isNotNull(c), sq.Expr(fmt.Sprintf("CARDINALITY (%s) > 0", c))}, nil
-		},
-		"hasNoElements": func(c string, v any) (sq.Sqlizer, error) {
+		"isNotSpecified": func(c string, v any) (sq.Sqlizer, error) {
 			return sq.Or{isNull(c), sq.Expr(fmt.Sprintf("CARDINALITY (%s) = 0", c))}, nil
+		},
+		"isSpecified": func(c string, v any) (sq.Sqlizer, error) {
+			return sq.And{isNotNull(c), sq.Expr(fmt.Sprintf("CARDINALITY (%s) > 0", c))}, nil
 		},
 		"notContainsElement": func(c string, v any) (sq.Sqlizer, error) {
 			return sq.Or{isNull(c), sq.Expr(fmt.Sprintf("NOT (? = ANY (%s))", c), v)}, nil
