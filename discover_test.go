@@ -147,7 +147,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 func tableMetadataToJSON(m TableMetadata) map[string]any {
 	data, _ := json.Marshal(m)
 	var result map[string]any
-	json.Unmarshal(data, &result)
+	_ = json.Unmarshal(data, &result)
 	return result
 }
 
