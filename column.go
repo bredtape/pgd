@@ -1,13 +1,13 @@
 package pgd
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/cespare/xxhash/v2"
-	"github.com/pkg/errors"
 )
 
 var (

@@ -1,9 +1,8 @@
 package pgd
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 // table metadata
@@ -27,7 +26,7 @@ func (t TableMetadata) Validate() error {
 	}
 	for ck, c := range t.Columns {
 		if err := c.Validate(); err != nil {
-			return errors.Wrapf(err, "invalid column %s", c.Name)
+			return fmt.Errorf("invalid column %s: %w", c.Name, err)
 		}
 		if ck != c.Name {
 			return fmt.Errorf("column name %s does not match key %s", c.Name, ck)
@@ -41,7 +40,7 @@ type TablesMetadata map[Table]TableMetadata
 func (ts TablesMetadata) Validate() error {
 	for tk, t := range ts {
 		if err := t.Validate(); err != nil {
-			return errors.Wrapf(err, "invalid table %s", t.Name)
+			return fmt.Errorf("invalid table %s: %w", t.Name, err)
 		}
 		if tk != t.Name {
 			return fmt.Errorf("table name %s does not match key %s", t.Name, tk)
@@ -97,7 +96,7 @@ func (ts TablesMetadata) flattenColumns(result map[ColumnSelector]ColumnMetadata
 		if colMeta.Relation != nil {
 			err := ts.flattenColumns(result, cols, colMeta.Relation.Table)
 			if err != nil {
-				return errors.Wrapf(err, "failed to flatten table '%s', column '%s' via relation %v", table, column, parents)
+				return fmt.Errorf("failed to flatten table '%s', column '%s' via relation %v: %w", table, column, parents, err)
 			}
 		}
 	}
@@ -109,7 +108,7 @@ func (ts TablesMetadata) ConvertColumnSelectors(baseTable Table, css ...ColumnSe
 	for _, c := range css {
 		x, err := ts.ConvertColumnSelector(baseTable, c)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to convert column selector '%s'", c)
+			return nil, fmt.Errorf("failed to convert column selector '%s': %w", c, err)
 		}
 		result = append(result, x)
 	}

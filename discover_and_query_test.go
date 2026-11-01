@@ -507,8 +507,8 @@ INSERT INTO "table_very_long_table_prefix_but_below_63_bytes_A" (id, very_long_c
 	c := Config{
 		FilterOperations: DefaultFilterOperations,
 		ColumnDefaults: map[DataType]ColumnBehavior{
-			"integer": ColumnBehavior{},
-			"text":    ColumnBehavior{},
+			"integer": {},
+			"text":    {},
 		}}
 
 	expectedTables := TablesMetadata{

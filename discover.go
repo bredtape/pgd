@@ -9,7 +9,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/bredtape/set"
 	"github.com/jackc/pgx/v5"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -30,7 +29,7 @@ func NewAPI(c Config) (*API, error) {
 		c.DefaultLimit = defaultLimit
 	}
 	if ve := c.Validate(); ve != nil {
-		return nil, errors.Wrap(ve, "invalid config")
+		return nil, fmt.Errorf("invalid config: %w", ve)
 	}
 	return &API{c: c}, nil
 }
@@ -51,12 +50,12 @@ func (api *API) Discover(ctx context.Context, conn *pgx.Conn, baseTable Table) (
 
 	// Validate the metadata
 	if err := tables.Validate(); err != nil {
-		return DiscoverResult{}, errors.Wrap(err, "invalid table metadata")
+		return DiscoverResult{}, fmt.Errorf("invalid table metadata: %w", err)
 	}
 
 	cols, err := tables.FlattenColumns(baseTable)
 	if err != nil {
-		return DiscoverResult{}, errors.Wrap(err, "failed to index metadata by columns")
+		return DiscoverResult{}, fmt.Errorf("failed to index metadata by columns: %w", err)
 	}
 
 	result := DiscoverResult{
@@ -72,14 +71,14 @@ func (api *API) discoverWithRelations(ctx context.Context, conn *pgx.Conn, known
 	// Get table metadata
 	otherTables, err := api.discoverSingle(ctx, conn, known, baseTable)
 	if err != nil {
-		return errors.Wrap(err, "failed to discover table metadata")
+		return fmt.Errorf("failed to discover table metadata: %w", err)
 	}
 
 	for table := range otherTables {
 		if _, exists := known[table]; !exists {
 			err = api.discoverWithRelations(ctx, conn, known, table)
 			if err != nil {
-				return errors.Wrap(err, "failed to discover related table metadata")
+				return fmt.Errorf("failed to discover related table metadata: %w", err)
 			}
 		}
 	}
@@ -107,7 +106,7 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 		}).
 		ToSql()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to build table info query")
+		return nil, fmt.Errorf("failed to build table info query: %w", err)
 	}
 	batch.Queue(tableInfoQuery, tableInfoArgs...)
 
@@ -131,7 +130,7 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 		OrderBy("a.attnum").
 		ToSql()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to build column details query")
+		return nil, fmt.Errorf("failed to build column details query: %w", err)
 	}
 	batch.Queue(columnsQuery, columnsArgs...)
 
@@ -153,14 +152,14 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 		}).
 		ToSql()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to build foreign keys query")
+		return nil, fmt.Errorf("failed to build foreign keys query: %w", err)
 	}
 	batch.Queue(fkQuery, fkArgs...)
 
 	// Execute the batch
 	tx, err := conn.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to begin transaction")
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Commit(ctx)
 	results := tx.SendBatch(ctx, batch)
@@ -173,13 +172,13 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("table %s.%s not found", api.c.Schema, table)
 		}
-		return nil, errors.Wrap(err, "failed to scan table info")
+		return nil, fmt.Errorf("failed to scan table info: %w", err)
 	}
 	if comment != nil {
 		var behavior TableBehavior
 		err = json.Unmarshal([]byte(*comment), &behavior)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal table %s comment as TableBehavior", table)
+			return nil, fmt.Errorf("failed to unmarshal table %s comment as TableBehavior: %w", table, err)
 		}
 		tableInfo.Behavior = behavior
 	}
@@ -187,7 +186,7 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 	// Process column details results
 	rows, err := results.Query()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get column details")
+		return nil, fmt.Errorf("failed to get column details: %w", err)
 	}
 	defer rows.Close()
 
@@ -195,7 +194,7 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 		col := ColumnMetadata{Table: table}
 		var comment *string
 		if err := rows.Scan(&col.Name, &col.DataType, &col.IsNullable, &comment); err != nil {
-			return nil, errors.Wrap(err, "failed to scan column details")
+			return nil, fmt.Errorf("failed to scan column details: %w", err)
 		}
 		b, err := api.parseAndMergeColumnBehavior(col.DataType, comment)
 		if err != nil {
@@ -203,20 +202,20 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 			if comment != nil {
 				safeComment = *comment
 			}
-			return nil, errors.Wrapf(err, "failed to parse column behavior for column '%s', datatype '%s' with comment '%s'", col.Name, col.DataType, safeComment)
+			return nil, fmt.Errorf("failed to parse column behavior for column '%s', datatype '%s' with comment '%s': %w", col.Name, col.DataType, safeComment, err)
 		}
 		col.Behavior = b
 		tableInfo.Columns[col.Name] = col
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
-		return nil, errors.Wrap(err, "error iterating column rows")
+		return nil, fmt.Errorf("error iterating column rows: %w", err)
 	}
 
 	// Process foreign keys results
 	fkRows, err := results.Query()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get foreign key details")
+		return nil, fmt.Errorf("failed to get foreign key details: %w", err)
 	}
 	defer fkRows.Close()
 
@@ -226,7 +225,7 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 		var colName, fkColumn Column
 		var fkTable Table
 		if err := fkRows.Scan(&colName, &fkSchema, &fkTable, &fkColumn); err != nil {
-			return nil, errors.Wrap(err, "failed to scan foreign key data")
+			return nil, fmt.Errorf("failed to scan foreign key data: %w", err)
 		}
 
 		// Only include references if they're in the same schema (assuming 1:1 relations)
@@ -244,7 +243,7 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 	}
 	fkRows.Close()
 	if err := fkRows.Err(); err != nil {
-		return nil, errors.Wrap(err, "error iterating foreign key rows")
+		return nil, fmt.Errorf("error iterating foreign key rows: %w", err)
 	}
 
 	known[tableInfo.Name] = tableInfo
@@ -266,11 +265,11 @@ func (api *API) parseAndMergeColumnBehavior(dataType DataType, raw *string) (Col
 	if raw != nil && *raw != "" {
 		err := json.Unmarshal([]byte(*raw), &m)
 		if err != nil {
-			return ColumnBehavior{}, errors.Wrap(err, "failed to unmarshal column behavior")
+			return ColumnBehavior{}, fmt.Errorf("failed to unmarshal column behavior: %w", err)
 		}
 
 		if err := json.Unmarshal([]byte(*raw), &b); err != nil {
-			return ColumnBehavior{}, errors.Wrap(err, "failed to unmarshal column behavior")
+			return ColumnBehavior{}, fmt.Errorf("failed to unmarshal column behavior: %w", err)
 		}
 	}
 

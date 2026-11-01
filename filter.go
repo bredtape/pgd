@@ -1,11 +1,11 @@
 package pgd
 
 import (
+	"errors"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/bredtape/set"
-	"github.com/pkg/errors"
 )
 
 type FilterOperator string
@@ -206,7 +206,7 @@ type WhereExpression struct {
 
 func (f WhereExpression) Validate() error {
 	if err := f.validateWithParent(""); err != nil {
-		return errors.Wrap(err, "invalid where expression")
+		return fmt.Errorf("invalid where expression: %w", err)
 	}
 	return nil
 }

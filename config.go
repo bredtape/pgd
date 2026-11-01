@@ -1,9 +1,8 @@
 package pgd
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 // data type. Lower case names of postgres data types

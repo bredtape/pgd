@@ -9,7 +9,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/bredtape/set"
 	"github.com/jackc/pgx/v5"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -59,7 +58,7 @@ func (q Query) Validate() error {
 	}
 	if q.Where != nil {
 		if err := q.Where.Validate(); err != nil {
-			return errors.Wrap(err, "invalid filter expression")
+			return fmt.Errorf("invalid filter expression: %w", err)
 		}
 	}
 	if q.Limit < 1 {
@@ -87,24 +86,24 @@ func (qd QueryDebug) LogValue() slog.Value {
 func (api *API) Query(ctx context.Context, db *pgx.Conn, tables TablesMetadata, query Query) (QueryResult, QueryDebug, error) {
 	debug := QueryDebug{}
 	if err := query.Validate(); err != nil {
-		return QueryResult{}, debug, errors.Wrap(err, "invalid query")
+		return QueryResult{}, debug, fmt.Errorf("invalid query: %w", err)
 	}
 
 	qPage, qTotal, err := api.convertQuery(tables, query)
 	if err != nil {
-		return QueryResult{}, debug, errors.Wrap(err, "invalid query")
+		return QueryResult{}, debug, fmt.Errorf("invalid query: %w", err)
 	}
 
 	batch := &pgx.Batch{}
 	sqlTotal, argsTotal, err := qTotal.ToSql()
 	if err != nil {
-		return QueryResult{}, debug, errors.Wrap(err, "invalid (total) query")
+		return QueryResult{}, debug, fmt.Errorf("invalid (total) query: %w", err)
 	}
 	batch.Queue(sqlTotal, argsTotal...)
 
 	sqlPage, argsPage, err := qPage.ToSql()
 	if err != nil {
-		return QueryResult{}, debug, errors.Wrap(err, "invalid query")
+		return QueryResult{}, debug, fmt.Errorf("invalid query: %w", err)
 	}
 	batch.Queue(sqlPage, argsPage...)
 	debug = QueryDebug{
@@ -115,14 +114,14 @@ func (api *API) Query(ctx context.Context, db *pgx.Conn, tables TablesMetadata, 
 
 	tx, err := db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
 	if err != nil {
-		return QueryResult{}, debug, errors.Wrap(err, "failed to begin transaction")
+		return QueryResult{}, debug, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Commit(ctx)
 	batchResults := tx.SendBatch(ctx, batch)
 
 	var total uint64
 	if err := batchResults.QueryRow().Scan(&total); err != nil {
-		return QueryResult{}, debug, errors.Wrap(err, "failed to get total")
+		return QueryResult{}, debug, fmt.Errorf("failed to get total: %w", err)
 	}
 	result := QueryResult{
 		Data:  make([]map[string]any, 0),
@@ -131,14 +130,14 @@ func (api *API) Query(ctx context.Context, db *pgx.Conn, tables TablesMetadata, 
 	}
 	rows, err := batchResults.Query()
 	if err != nil {
-		return QueryResult{}, debug, errors.Wrap(err, "failed to get rows")
+		return QueryResult{}, debug, fmt.Errorf("failed to get rows: %w", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		xs, err := rows.Values()
 		if err != nil {
-			return QueryResult{}, debug, errors.Wrap(err, "failed to scan row")
+			return QueryResult{}, debug, fmt.Errorf("failed to scan row: %w", err)
 		}
 
 		row := make(map[string]any, len(xs))
@@ -150,7 +149,7 @@ func (api *API) Query(ctx context.Context, db *pgx.Conn, tables TablesMetadata, 
 	}
 
 	if err := rows.Err(); err != nil {
-		return QueryResult{}, debug, errors.Wrap(err, "error in rows")
+		return QueryResult{}, debug, fmt.Errorf("error in rows: %w", err)
 	}
 
 	return result, debug, batchResults.Close()
@@ -190,7 +189,7 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 	if query.Where != nil {
 		qf, cols, err := query.Where.toSQL(api.c.FilterOperations, tables, query.From)
 		if err != nil {
-			return emptySelect, emptySelect, errors.Wrap(err, "invalid filter expression")
+			return emptySelect, emptySelect, fmt.Errorf("invalid filter expression: %w", err)
 		}
 		columnsUsed.AddSets(cols)
 
@@ -200,7 +199,7 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 
 	joins, err := processJoins(tables, columnsUsed)
 	if err != nil {
-		return emptySelect, emptySelect, errors.Wrap(err, "invalid foreign relations")
+		return emptySelect, emptySelect, fmt.Errorf("invalid foreign relations: %w", err)
 	}
 	for _, j := range joins {
 		toPrefix, _ := j.To.SplitAtLastColumn()
@@ -218,7 +217,7 @@ func (api *API) convertQuery(tables TablesMetadata, query Query) (qPage sq.Selec
 	for _, c := range query.OrderBy {
 		cs, err := tables.ConvertColumnSelector(query.From, c.ColumnSelector)
 		if err != nil {
-			return qPage, qTotal, errors.Wrapf(err, "failed to convert column selector in orderby expression")
+			return qPage, qTotal, fmt.Errorf("failed to convert column selector in orderby expression: %w", err)
 		}
 
 		if _, ok := columnsUsed[cs]; !ok {
