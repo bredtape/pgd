@@ -164,7 +164,6 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 	}
 	defer tx.Commit(ctx)
 	results := tx.SendBatch(ctx, batch)
-	defer results.Close()
 
 	// Process table info results
 	tableInfo := TableMetadata{Columns: make(map[Column]ColumnMetadata)}
@@ -250,7 +249,7 @@ func (api *API) discoverSingle(ctx context.Context, conn *pgx.Conn, known Tables
 
 	known[tableInfo.Name] = tableInfo
 
-	return otherTables, nil
+	return otherTables, results.Close()
 }
 
 func (api *API) parseAndMergeColumnBehavior(dataType DataType, raw *string) (ColumnBehavior, error) {

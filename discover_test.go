@@ -48,7 +48,9 @@ func TestDiscoverSimpleTable1(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to connect to test database: %v", err)
 	}
-	defer db.Close(ctx)
+	defer func() {
+		_ = db.Close(ctx)
+	}()
 
 	schema := `
 DROP TABLE IF EXISTS table1;
@@ -120,7 +122,7 @@ COMMENT ON COLUMN table1.age IS E'{"properties": {"key4": "value4"}, "descriptio
 		_, err = db.Exec(ctx, schema)
 		So(err, ShouldBeNil)
 
-		Printf("text filter operations: %v\n", getMapKeys(c.FilterOperations["text"]))
+		_, _ = Printf("text filter operations: %v\n", getMapKeys(c.FilterOperations["text"]))
 
 		Convey("Discover table1", func() {
 			result, err := api.Discover(ctx, db, "table1")
@@ -176,7 +178,9 @@ func TestDiscoverTableWithRelation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to connect to test database: %v", err)
 	}
-	defer db.Close(ctx)
+	defer func() {
+		_ = db.Close(ctx)
+	}()
 	schema := `
 DROP TABLE IF EXISTS table2;
 DROP TABLE IF EXISTS table3;

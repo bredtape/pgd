@@ -119,7 +119,6 @@ func (api *API) Query(ctx context.Context, db *pgx.Conn, tables TablesMetadata, 
 	}
 	defer tx.Commit(ctx)
 	batchResults := tx.SendBatch(ctx, batch)
-	defer batchResults.Close()
 
 	var total uint64
 	if err := batchResults.QueryRow().Scan(&total); err != nil {
@@ -154,7 +153,7 @@ func (api *API) Query(ctx context.Context, db *pgx.Conn, tables TablesMetadata, 
 		return QueryResult{}, debug, errors.Wrap(err, "error in rows")
 	}
 
-	return result, debug, nil
+	return result, debug, batchResults.Close()
 }
 
 var (

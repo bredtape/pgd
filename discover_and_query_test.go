@@ -915,7 +915,9 @@ func runTests(t *testing.T, c Config, schema string, baseTable Table, expectedTa
 	if err != nil {
 		t.Fatalf("Failed to connect to test database: %v", err)
 	}
-	defer db.Close(ctx)
+	defer func() {
+		_ = db.Close(ctx)
+	}()
 
 	Convey(fmt.Sprintf("Unit test %s, base table %s. Apply schema", t.Name(), baseTable), t, func() {
 		_, err = db.Exec(ctx, schema)
@@ -1012,7 +1014,7 @@ func runTests(t *testing.T, c Config, schema string, baseTable Table, expectedTa
 					//result, _, err := api.Query(ctx, db, tables, tc.Query)
 					result, debug, err := api.Query(ctx, db, result.TablesMetadata, tc.Query)
 					if debug.PageSQL != "" {
-						Printf("debug page sql: '%s'\nargs: '%v', total sql: '%s'\n", debug.PageSQL, debug.PageArgs, debug.TotalSQL)
+						_, _ = Printf("debug page sql: '%s'\nargs: '%v', total sql: '%s'\n", debug.PageSQL, debug.PageArgs, debug.TotalSQL)
 					}
 					So(err, ShouldBeNil)
 
