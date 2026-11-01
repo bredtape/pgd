@@ -1,11 +1,11 @@
 module github.com/bredtape/pgd
 
-go 1.25.0
+go 1.27.0
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/bredtape/set v0.0.4
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.12.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.8.1
 )
@@ -21,6 +21,6 @@ require (
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/smarty/assertions v1.15.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/text v0.43.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
